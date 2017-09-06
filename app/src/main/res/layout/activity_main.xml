@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v4.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawerlayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="org.wangguangjie.headline.MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorPrimary"
+            android:textColor="@color/white">
+            <Spinner
+                android:id="@+id/spinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:entries="@array/classifies"
+                android:layout_gravity="right"
+                android:gravity="right"
+                android:popupBackground="@color/colorPrimary"
+                android:spinnerMode="dropdown"
+                android:dropDownVerticalOffset="0sp"
+                android:theme="@style/ActionBarTheme"
+                >
+            </Spinner>
+        </android.support.v7.widget.Toolbar>
+
+        <io.codetail.widget.RevealFrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+          <LinearLayout
+              android:id="@+id/content_overlay"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              android:layout_below="@id/toolbar">
+          </LinearLayout>
+
+          <LinearLayout
+              android:id="@+id/content_frame"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              android:layout_below="@id/toolbar">
+          </LinearLayout>
+        </io.codetail.widget.RevealFrameLayout>
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="@dimen/side_menu_width"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left"
+        android:scrollbarThumbVertical="@android:color/transparent">
+        <LinearLayout
+            android:id="@+id/drawer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:divider="@drawable/item_divider"
+            android:showDividers="middle">
+        </LinearLayout>
+    </ScrollView>
+</android.support.v4.widget.DrawerLayout>

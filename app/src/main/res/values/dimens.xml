@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="side_menu_width">60dp</dimen>
+    <dimen name="side_menu_height">60dp</dimen>
+    <dimen name="sidem_menu_divider_height">5dp</dimen>
+</resources>
