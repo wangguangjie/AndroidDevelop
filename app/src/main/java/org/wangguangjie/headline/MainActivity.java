@@ -1,6 +1,8 @@
 package org.wangguangjie.headline;
 
 import android.animation.Animator;
+import android.app.Fragment;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Message;
@@ -20,7 +22,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
-
+import android.widget.Toast;
 import org.wangguangjie.hit.HitFragment;
 import org.wangguangjie.sidemenu.model.SideItem;
 import org.wangguangjie.sidemenu.Listener.SideMenuActionBarDrawerToggle;
@@ -28,6 +30,19 @@ import org.wangguangjie.sidemenu.Listener.SideMenuActionBarDrawerToggle;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 问题1.由于三星手机的原因（别的机型测试没有问题），在每次程序进入后台之后（如按HOME键），系统结束程序进程（回收程序的内存），导致重新进入程序之后，
+ * 程序重新启动（onCreate开始执行），系统之前保存了Fragment对象，所以在onCreate中对Fragment进行恢复，此时程序奔溃，奔溃的原因有如下两点：
+ * 1）在fragment中使用了Activity的View，在恢复Fragment过程中此View为null，导致程序奔溃(空指针异常），在此的分析主要有两种可能：第一，可能是
+ *    在恢复Fragment的过程中，View其实也是可以恢复的，只是View的恢复比Fragment晚一些（这是我一开始的猜测），所以导致空指针异常。第二，可能是onCreate
+ *    本身并不会恢复View组件，所以无论如何都会导致空指针异常，经过验证后面的猜测是正确的，也很容易理解，程序保存的只是少部分数据（如果连View都保存了，
+ *    岂不是什么数据都会保存吗）.
+ * 2）在恢复的Fragment中由于更新了界面，与此同时，在Activity中替换了Fragment（replace），也就是说程序销毁了恢复的Fragment对象，导致程序异常.
+ * 解决方案：
+ * 1)重写Activity 的onSaveInstance方法，不让程序主动保存Fragment对象(也有其他的解决方案，但是此种是最简单有效的).
+ * 2)重新对程序的逻辑进行分析，在Fragment尽量不使用Activity的View（也就是在什么地方定义的View尽量在此地方设置监听），由于Spinner在程序初始化的时候，
+ *   会执行选择时间，所以Fragment在初始化的时候不需要再开启子线程来获取和更新数据.
+ */
 public class MainActivity extends AppCompatActivity{
 
     private DrawerLayout mDrawerLayout;
@@ -40,27 +55,30 @@ public class MainActivity extends AppCompatActivity{
     private String mTitle;
     private int mIcon;
     private int mLog;
+    private boolean isFistSpinner;
     HitFragment mHitFragment;
-    private boolean isNull;
+
+    Bundle mBundle;
 
     private List<SideItem> items=new ArrayList<>();
 
     final static String CANCEL="Cancel";
     final static String HIT="Hit";
+    final static String ABOUT="About";
     final static String MUSIC="Music";
     final static String RESOURCE="reource";
     final static String MOVIE="Movie";
     final static String ALBUM="Album";
     final static String POSITION="position";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d("test","onCreate");
         setContentView(R.layout.activity_main);
-        if(savedInstanceState==null)
-            isNull=true;
+        //mBundle=savedInstanceState;
         //初始化值;
-        getValues();
+        initValues();
         //初始化视图;
         initView();
     }
@@ -93,13 +111,14 @@ public class MainActivity extends AppCompatActivity{
 
     @Override
     public void onSaveInstanceState(Bundle b){
+        super.onSaveInstanceState(b);
         //mHitFragment=new HitFragment();
         Log.d("test","onSaveInstanceState");
         //mHitFragment.setSpinner(mSpinner);
         //mHitFragment.setFrgamentView(content_frame);
         //getSupportFragmentManager().beginTransaction().replace(R.id.content_frame,mHitFragment).commit();
     }
-    private void getValues(){
+    private void initValues(){
         mDrawerLayout=(DrawerLayout)findViewById(R.id.drawerlayout);
         content_frame=(LinearLayout)findViewById(R.id.content_frame);
         content_overlay=(LinearLayout)findViewById(R.id.content_overlay);
@@ -112,28 +131,54 @@ public class MainActivity extends AppCompatActivity{
         //初始化工具条;
         initActionBar();
         //初始化Fragment;
-        initMainFragment();
+        if(mHitFragment==null)
+        {
+            mHitFragment = new HitFragment();
+        }
+        mHitFragment.setFrgamentView(content_frame);
+        getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, mHitFragment).commit();
+        //设置spinner监听器;
+        mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Log.d("spinner","spinner");
+                mHitFragment.onItemSelected(position);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
         //初始化侧边菜单;
         initSideMenu();
     }
-
     private void initActionBar(){
         //toolbar初始化设置;
         mTitle="title1";
         mIcon=R.drawable.log1;
         mLog=R.mipmap.icon_hit;
         setActionBar();
-
     }
+    private void setActionBar(){
+        mToolbar.setTitle("HIT官网");
+        mToolbar.setTitleTextColor(getResources().getColor(R.color.colorAccent));
+        mToolbar.setLogo(mLog);
+        mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
-    private void initMainFragment(){
-        mHitFragment = new HitFragment();
-        mHitFragment.setSpinner(mSpinner);
-        mHitFragment.setFrgamentView(content_frame);
-        getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, mHitFragment).commit();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        setSupportActionBar(mToolbar);
+        ActionBar actionBar=getSupportActionBar();
+        actionBar.setHomeButtonEnabled(true);
+        actionBar.setDisplayHomeAsUpEnabled(true);
     }
-
-
     private void initSideMenu(){
         //设置菜单项;
         setItems();
@@ -171,6 +216,8 @@ public class MainActivity extends AppCompatActivity{
         items.add(item0);
         SideItem item1=new SideItem(R.mipmap.icon_hit,HIT);
         items.add(item1);
+        SideItem itemAbout=new SideItem(R.mipmap.icon,ABOUT);
+        items.add(itemAbout);
         SideItem item2=new SideItem(R.drawable.icon_music,MUSIC);
         items.add(item2);
         for(int i=0;i<20;i++)
@@ -181,32 +228,12 @@ public class MainActivity extends AppCompatActivity{
         items.add(item4);
 
     }
-    private void setActionBar(){
-        mToolbar.setTitle("HIT官网");
-        mToolbar.setTitleTextColor(getResources().getColor(R.color.colorAccent));
-        mToolbar.setLogo(mLog);
-        mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-        setSupportActionBar(mToolbar);
-        ActionBar actionBar=getSupportActionBar();
-        actionBar.setHomeButtonEnabled(true);
-        actionBar.setDisplayHomeAsUpEnabled(true);
-    }
 
     //创建菜单回调;
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
-       // getMenuInflater().inflate(R.menu.menu_main, menu);
+        // getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
@@ -235,7 +262,6 @@ public class MainActivity extends AppCompatActivity{
                 if(mHitFragment==null)
                 {
                     mHitFragment=new HitFragment();
-                    mHitFragment.setSpinner(mSpinner);
                     mHitFragment.setFrgamentView(content_frame);
                 }
                 getSupportFragmentManager().beginTransaction().replace(R.id.content_frame,mHitFragment).commit();
@@ -243,7 +269,9 @@ public class MainActivity extends AppCompatActivity{
             break;
             case 2:
             {
-
+                Intent intent=new Intent();
+                intent.setAction("org.wangguangjie.crimelist");
+                startActivity(intent);
             }
             break;
             default:
@@ -255,11 +283,9 @@ public class MainActivity extends AppCompatActivity{
         super.onConfigurationChanged(newConfig);
         if(newConfig.orientation==Configuration.ORIENTATION_PORTRAIT){
             mHitFragment=new HitFragment();
-            mHitFragment.setSpinner(mSpinner);
             getSupportFragmentManager().beginTransaction().replace(R.id.content_frame,mHitFragment).commit();
         }else{
             mHitFragment=new HitFragment();
-            mHitFragment.setSpinner(mSpinner);
             getSupportFragmentManager().beginTransaction().replace(R.id.content_frame,mHitFragment).commit();
         }
     }

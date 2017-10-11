@@ -95,7 +95,6 @@ public class HitFragment extends Fragment implements Screenable{
     private View mContainerView;
     private String res;
 
-    private boolean isFistSpinner;
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -162,20 +161,20 @@ public class HitFragment extends Fragment implements Screenable{
     }
 
 
-   public  void setSpinner(Spinner spinner){
-       mSpinner=spinner;
-   }
-
-   public void setFrgamentView(View view){
-       frgamentView=view;
-   }
+    public void setFrgamentView(View view){
+        frgamentView=view;
+    }
 
     @Override
     public void onCreate(Bundle saveInstance){
         super.onCreate(saveInstance);
         Log.d("test","fragment onCreate");
         initValues();
-        initSpinner();
+    }
+    @Override
+    public void onAttach(Context context){
+        super.onAttach(context);
+        Log.d("test","fragment onAttach");
     }
 
     @Override
@@ -227,46 +226,33 @@ public class HitFragment extends Fragment implements Screenable{
         page_number+=10;
         //isFistSpinner=true;
     }
-    private void initSpinner()
-    {
-        isFistSpinner=true;
-        mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                switch (position)
-                {
-                    case 0:
-                        url=url1;
-                        break;
-                    case 1:
-                        url=url2;
-                        break;
-                    case 2:
-                        url=url3;
-                        break;
-                    case 3:
-                        url=url4;
-                        break;
-                    case 4:
-                        url=url5;
-                        break;
-                    default:
-                        break;
-                }
-                if(!isFistSpinner) {
-                    Message msg = new Message();
-                    msg.what = 0x124;
-                    handler.sendMessage(msg);
-                }
-                isFistSpinner=false;
-                Log.d("test","fragment Spinner");
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
+    public void onItemSelected(int position){
+        switch (position)
+        {
+            case 0:
+                url=url1;
+                break;
+            case 1:
+                url=url2;
+                break;
+            case 2:
+                url=url3;
+                break;
+            case 3:
+                url=url4;
+                break;
+            case 4:
+                url=url5;
+                break;
+            default:
+                break;
+        }
+        //if(!isFirst)
+        {
+            Message msg = new Message();
+            msg.what = 0x124;
+            handler.sendMessage(msg);
+        }
     }
 
     @Override
@@ -279,51 +265,12 @@ public class HitFragment extends Fragment implements Screenable{
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, final int position, long l) {
-                final AlertDialog.Builder builder=new AlertDialog.Builder(getActivity());
-                builder.setTitle("提示");
-                //builder.setMessage("需要使用浏览器打开吗?");
-                builder.setSingleChoiceItems(new String[]{"本地打开", "浏览器打开"}, 0, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        select=i;
-                    }
-                });
-                builder.setPositiveButton("确定",new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        switch (select)
-                        {
-                            case 1:
-                                Intent intent=new Intent();
-                                intent.setAction("android.intent.action.VIEW");
-                                Uri uri= Uri.parse(store_lists.getLists().get(position-1).getUrl());
-                                intent.setData(uri);
-                                // intent.setClassName("com.android.browser","om.android.browser.BrowserActivity");
-                                startActivity(intent);
-                                builder.create().dismiss();
-                                break;
-                            case 0:
-                                Intent intent1=new Intent(getActivity(),WebInformation.class);
-                                Bundle bundle=new Bundle();
-                                NewItem item=store_lists.getLists().get(position-1);
-                                bundle.putString("url",item.getUrl());
-                                intent1.putExtras(bundle);
-                                startActivity(intent1);
-                                builder.create().dismiss();
-                                break;
-                            default:break;
-                        }
-                        select=0;
-                    }
-                });
-                builder.setNegativeButton("取消",new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                        //finish();
-                    }
-                });
-                builder.create().show();
+                Intent intent1=new Intent(getActivity(),WebInformation.class);
+                Bundle bundle=new Bundle();
+                NewItem item=store_lists.getLists().get(position-1);
+                bundle.putString("url",item.getUrl());
+                intent1.putExtras(bundle);
+                startActivity(intent1);
             }
         });
         //刷新;
@@ -361,7 +308,7 @@ public class HitFragment extends Fragment implements Screenable{
         });
         Log.d("onCreateView","createView");
         initData();
-       // isFistSpinner=true;
+        // isFistSpinner=true;
         return rootView;
     }
 
@@ -387,7 +334,7 @@ public class HitFragment extends Fragment implements Screenable{
 //      {
 //          ie.printStackTrace();
 //      }
-       //相比于上一种方法，此种方法我觉得更合适，因为效果是一样的，但是不会存在线程同步的问题.
+        //相比于上一种方法，此种方法我觉得更合适，因为效果是一样的，但是不会存在线程同步的问题.
         //数据恢复;
         store_lists.recoveryData();
         //如果有数据则加载（此种处理，包括上面注释的处理的目的都在于认为内存中加载的数据比网络获取数据更快，可以避免让用户长时间等待而看不到数据）
@@ -397,7 +344,7 @@ public class HitFragment extends Fragment implements Screenable{
             listView.deferNotifyDataSetChanged();
         }
 
-        new Thread(new getThread()).start();
+        //new Thread(new getThread()).start();
     }
 
     //主线程显示信息;
@@ -417,17 +364,18 @@ public class HitFragment extends Fragment implements Screenable{
         listView.refreshComplete();
         listView.getMoreComplete();
         //刷新动画;
-        View view1=frgamentView;
-        int[] location={0,0};
-        view1.getLocationOnScreen(location);
-        int cx=location[0]+view1.getWidth()/2;
-        int cy=view1.getHeight()/2;
-        int radix=(int)Math.hypot(view1.getWidth()/2,view1.getHeight()/2);
-        Animator animator= ViewAnimationUtils.createCircularReveal(view1,cx,cy,0,radix);
-        animator.setInterpolator(new AccelerateDecelerateInterpolator());
-        animator.setDuration(750);
-        animator.start();
-
+        if(first&&frgamentView!=null) {
+            View view1 = frgamentView;
+            int[] location = {0, 0};
+            view1.getLocationOnScreen(location);
+            int cx = location[0] + view1.getWidth() / 2;
+            int cy = view1.getHeight() / 2;
+            int radix = (int) Math.hypot(view1.getWidth() / 2, view1.getHeight() / 2);
+            Animator animator = ViewAnimationUtils.createCircularReveal(view1, cx, cy, 0, radix);
+            animator.setInterpolator(new AccelerateDecelerateInterpolator());
+            animator.setDuration(750);
+            animator.start();
+        }
     }
     //获取网络信息;
     private void getMessage()
@@ -504,7 +452,7 @@ public class HitFragment extends Fragment implements Screenable{
             ie.printStackTrace();
         }
     }
-
+    //通知公告和媒体报道.
     private void analyze1(Element el1){
         String title;
         String url;
@@ -531,6 +479,7 @@ public class HitFragment extends Fragment implements Screenable{
             store_lists.addItem(new NewItem(title,time,visitCount,url));
         }
     }
+    //新闻速递和校园动态.
     private void analyze2(Element el1){
         String title;
         String url;
@@ -547,6 +496,7 @@ public class HitFragment extends Fragment implements Screenable{
             store_lists.addItem(new NewItem(title,time,visitCount,url));
         }
     }
+    //讲座论坛.
     private void analyze3(Element el1){
         String title="";
         String url;
@@ -558,8 +508,10 @@ public class HitFragment extends Fragment implements Screenable{
             Elements s=ell.getElementsByTag("div");
             title=s.get(0).getElementsByTag("a").text();
             url=HIT+s.get(0).getElementsByTag("a").attr("href");
-            time=s.get(2).getElementsByTag("span").get(0).text();
-            visitCount=s.get(2).getElementsByTag("span").get(1).text();
+            //time=s.get(2).getElementsByTag("span").get(0).text();
+            Elements s1=s.get(2).getElementsByTag("div");
+            time=s1.get(1).text();
+            visitCount=s1.get(2).text()+"\n"+s1.get(3).text();
             store_lists.addItem(new NewItem(title,time,visitCount,url));
         }
     }

@@ -81,25 +81,26 @@ public class WebInformation extends AppCompatActivity {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 System.out.println("开始加载了");
-                mProgressBar.setVisibility(View.VISIBLE);
-
+                //mProgressBar.setVisibility(View.VISIBLE);
+                //mWebview.setVisibility(View.GONE);
             }
 
             //设置结束加载函数
             @Override
             public void onPageFinished(WebView view, String url) {
                 mProgressBar.setVisibility(View.GONE);
+                mWebview.setVisibility(View.VISIBLE);
                 //加载动画;
-                View view1=view;
-                int[] location={0,0};
-                view1.getLocationOnScreen(location);
-                int cx=location[0]+view1.getWidth()/2;
-                int cy=view1.getHeight()/2;
-                int radix=(int)Math.hypot(view1.getWidth()/2,view1.getHeight()/2);
-                Animator animator= ViewAnimationUtils.createCircularReveal(view1,cx,cy,0,radix);
-                animator.setInterpolator(new AccelerateDecelerateInterpolator());
-                animator.setDuration(750);
-                animator.start();
+//                View view1=view;
+//                int[] location={0,0};
+//                view1.getLocationOnScreen(location);
+//                int cx=location[0]+view1.getWidth()/2;
+//                int cy=view1.getHeight()/2;
+//                int radix=(int)Math.hypot(view1.getWidth()/2,view1.getHeight()/2);
+//                Animator animator= ViewAnimationUtils.createCircularReveal(view1,cx,cy,0,radix);
+//                animator.setInterpolator(new AccelerateDecelerateInterpolator());
+//                animator.setDuration(750);
+//                animator.start();
             }
         });
 

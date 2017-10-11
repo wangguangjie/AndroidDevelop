@@ -6,10 +6,6 @@
         <item name="android:colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="android:spinnerDropDownItemStyle">@style/mySpinnerDrownItemStyle</item>
         <item name="android:spinnerStyle">@style/mySpinnerStyle</item>
-        <item name="android:navigationBarColor">@android:color/black</item>
-        <item name="android:colorForeground">@android:color/black</item>
-        <item name="android:statusBarColor">@android:color/black</item>
-        <item name="android:textColorPrimary">@android:color/holo_blue_dark</item>
     </style>
     <style name="mySpinnerDrownItemStyle" parent="android:Widget.Holo.DropDownItem.Spinner">
         <item name="android:textColor">@color/colorAccent</item>
