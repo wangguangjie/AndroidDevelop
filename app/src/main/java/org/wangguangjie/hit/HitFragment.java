@@ -24,6 +24,7 @@ import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
@@ -34,8 +35,11 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.wangguangjie.RefreshableView;
 import org.wangguangjie.headline.R;
 import org.wangguangjie.sidemenu.interfaces.Screenable;
+
+import java.util.List;
 
 import static android.content.Context.MODE_PRIVATE;
 
@@ -75,7 +79,7 @@ public class HitFragment extends Fragment implements Screenable{
 
     final private String HIT = "http://www.hitsz.edu.cn";
     //
-    private PullListView listView;
+    private ListView listView;
     //
     private InformationAdapter adapter;
     //
@@ -94,6 +98,8 @@ public class HitFragment extends Fragment implements Screenable{
     private Bitmap mBitmap;
     private View mContainerView;
     private String res;
+
+    private RefreshableView mLinearLayout;
 
     private Handler handler = new Handler() {
         @Override
@@ -119,7 +125,7 @@ public class HitFragment extends Fragment implements Screenable{
             //如果无更多页面不许进行加载更多;
             else if (msg.what == 0x125) {
                 Toast.makeText(getActivity(), "无更多信息!", Toast.LENGTH_LONG).show();
-                listView.getMoreComplete();
+               // listView.getMoreComplete();
             }
             //处理异常信息;
             else if (msg.what == 0x111) {
@@ -259,9 +265,8 @@ public class HitFragment extends Fragment implements Screenable{
     public View onCreateView(LayoutInflater inflater, ViewGroup viewGroup,Bundle bundle){
         Log.d("test","fragment onCreateView");
         View rootView=inflater.inflate(R.layout.pulllist,viewGroup,false);
-        listView=(PullListView) rootView.findViewById(R.id.hitfragment_container);
-        listView.addSharePreference(getActivity().getSharedPreferences("refresh_date",MODE_PRIVATE));
-        //根据用户选择不同的打开方式;
+        mLinearLayout=(RefreshableView)rootView;
+        listView=(ListView)rootView.findViewById(R.id.hitfragment_container);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, final int position, long l) {
@@ -274,7 +279,7 @@ public class HitFragment extends Fragment implements Screenable{
             }
         });
         //刷新;
-        listView.setOnRefreshListener(new PullListView.OnRefreshListener() {
+        mLinearLayout.setOnRefreshListener(new RefreshableView.PullToRefreshListener() {
             @Override
             public void onRefresh() {
                 first=true;
@@ -289,23 +294,7 @@ public class HitFragment extends Fragment implements Screenable{
             }
         },1);
         //加载更多;
-        listView.setOnGetMoreListener(new PullListView.OnGetMoreListener() {
-            @Override
-            public void onGetMore() {
-                first=false;
-                if(page_number/10<=pages)
-                {
-                    page_url=url+page_number;
-                    page_number+=10;
-                    new Thread(new getThread()).start();
-                }
-                else
-                {
-                    new Thread(new WastTime()).start();
-                }
 
-            }
-        });
         Log.d("onCreateView","createView");
         initData();
         // isFistSpinner=true;
@@ -361,8 +350,8 @@ public class HitFragment extends Fragment implements Screenable{
             adapter.notifyDataSetChanged();
         }
         //信息获取完毕,技术刷新操作;
-        listView.refreshComplete();
-        listView.getMoreComplete();
+        mLinearLayout.finishRefreshing();
+        //listView.getMoreComplete();
         //刷新动画;
         if(first&&frgamentView!=null) {
             View view1 = frgamentView;
