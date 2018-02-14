@@ -303,28 +303,6 @@ public class HitFragment extends Fragment implements Screenable{
 
     private void initData(){
         store_lists = new StoreInformation(getActivity().getSharedPreferences("hit1", MODE_PRIVATE));
-        //加载缓存数据,但是会造成线程同步问题，不建议使用，解决方法可在后面让主线程睡眠小段时间，目的是让这个子线程能够把数据加载完成;
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                store_lists.recoveryData();
-//                Log.d("thread1",store_lists.getLists().size()+"");
-//                if (store_lists.getLists().size() > 0) {
-//                    Message msg = new Message();
-//                    msg.what = 0x126;
-//                    handler.sendMessage(msg);
-//                }
-//            }
-//        }).start();
-//      try{
-//          Thread.sleep(1000);
-//
-//      }catch (InterruptedException ie)
-//      {
-//          ie.printStackTrace();
-//      }
-        //相比于上一种方法，此种方法我觉得更合适，因为效果是一样的，但是不会存在线程同步的问题.
-        //数据恢复;
         store_lists.recoveryData();
         //如果有数据则加载（此种处理，包括上面注释的处理的目的都在于认为内存中加载的数据比网络获取数据更快，可以避免让用户长时间等待而看不到数据）
         if (store_lists.getLists().size() > 0) {
