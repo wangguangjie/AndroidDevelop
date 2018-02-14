@@ -27,6 +27,7 @@
         <activity android:name="org.wangguangjie.crime.controler.CrimePageActivity"
             android:theme="@style/CompatTheme"
             android:parentActivityName="org.wangguangjie.crime.controler.CrimeListActivity"/>
+        <activity android:name="org.wangguangjie.test.TestActivity"/>
     </application>
 
 </manifest>

@@ -23,6 +23,7 @@ import org.wangguangjie.crime.controler.CrimeListActivity;
 import org.wangguangjie.hit.HitFragment;
 import org.wangguangjie.sidemenu.model.SideItem;
 import org.wangguangjie.sidemenu.Listener.SideMenuActionBarDrawerToggle;
+import org.wangguangjie.test.TestActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -227,6 +228,8 @@ public class MainActivity extends AppCompatActivity{
         items.add(item1);
         SideItem itemAbout=new SideItem(R.mipmap.icon,ABOUT);
         items.add(itemAbout);
+        SideItem itemTest=new SideItem(R.mipmap.icon,"Test");
+        items.add(itemTest);
         SideItem item2=new SideItem(R.drawable.icon_music,MUSIC);
         items.add(item2);
         for(int i=0;i<10;i++)
@@ -282,6 +285,13 @@ public class MainActivity extends AppCompatActivity{
                 Intent intent=new Intent(this, CrimeListActivity.class);
                 startActivity(intent);
 
+            }
+            break;
+            case 3:
+            {
+                sideMenuActionBarDrawerToggle.closeDrawer();
+                Intent intent=new Intent(this, TestActivity.class);
+                startActivity(intent);
             }
             break;
             default:
