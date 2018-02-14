@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="CompatTheme" parent="Theme.AppCompat.Light">
+        <item name="colorAccent">@color/yellow</item>
+        <item name="buttonStyle">@style/button_style2</item>
+    </style>
+
+    <style name="button_style2" parent="android:style/Widget.Material.Button">
+    </style>
+</resources>

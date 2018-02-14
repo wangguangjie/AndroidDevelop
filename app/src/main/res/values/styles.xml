@@ -20,12 +20,28 @@
         <item name="android:windowTitleBackgroundStyle">@style/WindowTitileBackground</item>
         <item name="android:windowBackground">@color/white</item>
     </style>
-
     <style name="WindowTitileBackground">
         <item name="android:background">@color/colorPrimary</item>
     </style>
 
     <style name="ActionBarTheme" parent="@style/ThemeOverlay.AppCompat.ActionBar">
         <item name="android:textColor">@color/colorAccent</item>
+    </style>
+
+    <style name="CompatTheme" parent="Theme.AppCompat.Light">
+        <item name="colorAccent">@color/yellow</item>
+        <item name="buttonStyle">@style/button_style1</item>
+    </style>
+
+    <style name="theme1" parent="android:Theme.Holo">
+    </style>
+
+    <style name="button_style">
+        <item name="android:background">@color/green1</item>
+    </style>
+    <style name="button_style.Strong">
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="button_style1" parent="android:style/Widget.Holo.Button">
     </style>
 </resources>

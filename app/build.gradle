@@ -6,10 +6,10 @@ repositories {
 }
 android {
     compileSdkVersion 25
-    buildToolsVersion "26.0.0"
+    buildToolsVersion '26.0.2'
     defaultConfig {
         applicationId "org.wangguangjie.headline"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
@@ -33,4 +33,5 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.github.ozodrukh:CircularReveal:1.0.4'
     compile files('libs/jsoup-1.10.3.jar')
+    compile 'com.android.support:recyclerview-v7:25.+'
 }

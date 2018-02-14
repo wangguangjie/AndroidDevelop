@@ -1,11 +1,9 @@
 package org.wangguangjie.headline;
 
 import android.animation.Animator;
-import android.app.Fragment;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
-import android.os.Message;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -17,12 +15,11 @@ import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
-import android.widget.Toast;
+
+import org.wangguangjie.crime.controler.CrimeListActivity;
 import org.wangguangjie.hit.HitFragment;
 import org.wangguangjie.sidemenu.model.SideItem;
 import org.wangguangjie.sidemenu.Listener.SideMenuActionBarDrawerToggle;
@@ -41,7 +38,7 @@ import java.util.List;
  * 解决方案：
  * 1)重写Activity 的onSaveInstance方法，不让程序主动保存Fragment对象(也有其他的解决方案，但是此种是最简单有效的).
  * 2)重新对程序的逻辑进行分析，在Fragment尽量不使用Activity的View（也就是在什么地方定义的View尽量在此地方设置监听），由于Spinner在程序初始化的时候，
- *   会执行选择时间，所以Fragment在初始化的时候不需要再开启子线程来获取和更新数据.
+ *   会执行选择，所以Fragment在初始化的时候不需要再开启子线程来获取和更新数据.
  */
 public class MainActivity extends AppCompatActivity{
 
@@ -50,6 +47,8 @@ public class MainActivity extends AppCompatActivity{
     private LinearLayout content_overlay;
     private LinearLayout drawer;
     private Spinner mSpinner;
+
+    SideMenuActionBarDrawerToggle sideMenuActionBarDrawerToggle;
 
     private Toolbar mToolbar;
     private String mTitle;
@@ -81,8 +80,14 @@ public class MainActivity extends AppCompatActivity{
         initValues();
         //初始化视图;
         initView();
+        Log.d("test","test");
     }
 
+    @Override
+    public void onRestart(){
+        super.onRestart();
+        Log.d("test","onRestart");
+    }
     @Override
     public void onStart(){
         super.onStart();
@@ -92,6 +97,10 @@ public class MainActivity extends AppCompatActivity{
     public void onResume(){
         super.onResume();
         Log.d("test","onResume");
+    }
+    @Override
+    public void onWindowFocusChanged(boolean isChanged){
+        Log.d("test","onWindowFocusChanged");
     }
     @Override
     public void onPause(){
@@ -190,7 +199,7 @@ public class MainActivity extends AppCompatActivity{
             }
         });
         //drawerlayout与actionbar绑定，同时也作为drawer的监听器，当点击左上角图标时显示sidemenu(侧边菜单监听器);
-        SideMenuActionBarDrawerToggle sideMenuActionBarDrawerToggle=new SideMenuActionBarDrawerToggle(this,
+        sideMenuActionBarDrawerToggle=new SideMenuActionBarDrawerToggle(this,
                 mDrawerLayout,mToolbar,R.string.drawer_open,R.string.drawer_close,drawer,items,mHitFragment){
             @Override
             public void onSwitch(View view, int position) {
@@ -220,7 +229,7 @@ public class MainActivity extends AppCompatActivity{
         items.add(itemAbout);
         SideItem item2=new SideItem(R.drawable.icon_music,MUSIC);
         items.add(item2);
-        for(int i=0;i<20;i++)
+        for(int i=0;i<10;i++)
             items.add(item2);
         SideItem item3=new SideItem(R.drawable.icon_movie,MOVIE);
         items.add(item3);
@@ -269,9 +278,10 @@ public class MainActivity extends AppCompatActivity{
             break;
             case 2:
             {
-                Intent intent=new Intent();
-                intent.setAction("org.wangguangjie.crimelist");
+                sideMenuActionBarDrawerToggle.closeDrawer();
+                Intent intent=new Intent(this, CrimeListActivity.class);
                 startActivity(intent);
+
             }
             break;
             default:

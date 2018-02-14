@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="0dp"
+    android:orientation="horizontal"
+    android:layout_weight="5">
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_marginLeft="5dp"
+        android:layout_marginTop="5dp">
+        <ImageView
+            android:id="@+id/crime_camera"
+            android:layout_width="204.8dp"
+            android:layout_height="115.2dp"
+            android:background="@color/itemBackground"
+            android:scaleType="centerInside"
+            android:cropToPadding="true"/>
+        <ImageButton
+            android:id="@+id/crime_camera_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:src="@drawable/crime_camera"
+            />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:text="@string/crime_crime_title"
+            android:layout_weight="1"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:gravity="center|left"/>
+
+        <EditText
+            android:id="@+id/crime_title"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:hint="@string/crime_title_hint"
+            android:layout_weight="1"
+            android:gravity="center|left"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"/>
+    </LinearLayout>
+
+
+</LinearLayout>

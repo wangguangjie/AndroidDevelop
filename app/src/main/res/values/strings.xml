@@ -15,4 +15,34 @@
     <string name="crime_title_label">Title</string>
     <string name="crime_detail">Detail</string>
     <string name="crime_solved_label">is solved</string>
+    <string name="crime_test">Test</string>
+    <string name="crime_crimefragment_hint">crime title</string>
+    <string name="crime_crime_title">Title</string>
+    <string name="crime_crime_detail">Detail</string>
+    <string name="crime_crime_solved">Solved</string>
+    <string name="crime_datepicker">Date:</string>
+    <string name="crime_button_positive">ok</string>
+    <string name="crime_button_negative">cancel</string>
+    <string name="new_crime">New Crime</string>
+    <string name="show_subtitle">Show SubTitle</string>
+    <string name="hide_subtitle">Hide SubTitle</string>
+    <string name="subtitle_format">%1$s crimes</string>
+
+    <plurals name="subtitle_plurals">
+        <item quantity="one">%1$s crime</item>
+        <item quantity="other">%1$s crimes</item>
+    </plurals>
+    <string name="alert_delete">警告！</string>
+    <string name="button_select">选择联系人</string>
+    <string name="button_sendMessage">发送信息</string>
+    <string name="button_call">拨打电话</string>
+    <string name="crime_report">%1$s
+        The crime was discovered on %2$s, %3$s, and %4$S
+    </string>
+    <string name="crime_report_solved">The case is solved</string>
+    <string name="crime_report_unsolved">The case is not solved</string>
+    <string name="crime_report_no_suspect">there is no suspect</string>
+    <string name="crime_report_suspect">the suspect is %s.</string>
+    <string name="crime_report_subject">CriminalIntent Crime Report</string>
+    <string name="send_report">Send crime report via</string>
 </resources>

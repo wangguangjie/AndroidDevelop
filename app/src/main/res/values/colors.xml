@@ -4,8 +4,16 @@
     <color name="colorPrimary">#494949</color>
     <color name="toolbarColor">#ffffee</color>
     <color name="colorAccent">#F0F8FF</color>
+    <color name="color_button">#FFDEEAE9</color>
     <color name="itemBackground">#cccc99</color>
-    <color name="colorDivider">#FFA54F</color>
+    <color name="colorDivider">#ffa54f</color>
     <color name="white">#ffffff</color>
     <color name="accent_material_light">#ffcf40</color>
+    <color name="primary_material_light">#f7f0f5</color>
+    <color name="red">#f44336</color>
+    <color name="dark_red">#C3352B</color>
+    <color name="soothing_blue">#607D8B</color>
+    <color name="dark_blue">#005A8A</color>
+    <color name="green1">#D1EEEE</color>
+    <color name="yellow">#ffa54f</color>
 </resources>
