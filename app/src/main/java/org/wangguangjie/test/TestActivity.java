@@ -19,6 +19,7 @@ public class TestActivity extends AppCompatActivity {
         setContentView(R.layout.test_main_layout);
         ListView ls=(ListView)findViewById(R.id.ls);
         ls.setAdapter(new ArrayAdapter<>
-                (this,android.R.layout.simple_list_item_1,android.R.id.text1,new String[]{"1","2","3"}));
+                (this,android.R.layout.simple_list_item_1,android.R.id.text1,new String[]{"1","2","3","1","2","3"
+                ,"1","2","3","1","2","3","1","2","3","1","2","3","1","2","3","1","2","3"}));
     }
 }

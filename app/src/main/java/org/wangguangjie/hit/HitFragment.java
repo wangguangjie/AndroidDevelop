@@ -35,6 +35,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.wangguangjie.RefreshLinearLayout;
 import org.wangguangjie.RefreshableView;
 import org.wangguangjie.headline.R;
 import org.wangguangjie.sidemenu.interfaces.Screenable;
@@ -99,7 +100,7 @@ public class HitFragment extends Fragment implements Screenable{
     private View mContainerView;
     private String res;
 
-    private RefreshableView mLinearLayout;
+    private RefreshLinearLayout mLinearLayout;
 
     private Handler handler = new Handler() {
         @Override
@@ -265,7 +266,7 @@ public class HitFragment extends Fragment implements Screenable{
     public View onCreateView(LayoutInflater inflater, ViewGroup viewGroup,Bundle bundle){
         Log.d("test","fragment onCreateView");
         View rootView=inflater.inflate(R.layout.pulllist,viewGroup,false);
-        mLinearLayout=(RefreshableView)rootView;
+        mLinearLayout=(RefreshLinearLayout) rootView;
         listView=(ListView)rootView.findViewById(R.id.hitfragment_container);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -279,7 +280,7 @@ public class HitFragment extends Fragment implements Screenable{
             }
         });
         //刷新;
-        mLinearLayout.setOnRefreshListener(new RefreshableView.PullToRefreshListener() {
+        mLinearLayout.setOnRefreshingListener(new RefreshLinearLayout.RefreshingListener() {
             @Override
             public void onRefresh() {
                 first=true;
@@ -292,7 +293,7 @@ public class HitFragment extends Fragment implements Screenable{
                 //lists.clear();
                 new Thread(new getThread()).start();
             }
-        },1);
+        });
         //加载更多;
 
         Log.d("onCreateView","createView");
@@ -328,7 +329,7 @@ public class HitFragment extends Fragment implements Screenable{
             adapter.notifyDataSetChanged();
         }
         //信息获取完毕,技术刷新操作;
-        mLinearLayout.finishRefreshing();
+        //mLinearLayout.finishRefreshing();
         //listView.getMoreComplete();
         //刷新动画;
         if(first&&frgamentView!=null) {

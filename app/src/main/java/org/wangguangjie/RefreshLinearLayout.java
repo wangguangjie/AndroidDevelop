@@ -25,6 +25,8 @@ import android.widget.Toast;
 import org.w3c.dom.Text;
 import org.wangguangjie.headline.R;
 
+import java.util.concurrent.CopyOnWriteArrayList;
+
 /**
  * Created by wangguangjie on 2018/2/14.
  */
@@ -78,22 +80,32 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
     private MarginLayoutParams mRooterMarginLayoutParams;
     //刷新监听器;
     private RefreshingListener mRefreshingListener;
+    //
+    private GetMoreListener mGetMoreListener;
 
     //
     final static private String LAST_UPDATE_TIME="last_update_time";
 
+    //
+    private boolean isGetMore=false;
+
+    private Context mContext;
+    //
+    private boolean canRefresh;
+    private boolean canGetMore;
 
     public RefreshLinearLayout(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         //初始化值;
+        mContext=context;
         mHeader=(LinearLayout) LayoutInflater.from(context).inflate(R.layout.refresh_head,null);
         mProgressBar=(ProgressBar)mHeader.findViewById(R.id.progressbar);
         mImageView=(ImageView)mHeader.findViewById(R.id.arrow);
         mDescriptionTextView=(TextView)mHeader.findViewById(R.id.description);
         mUpdateTimeTextView=(TextView)mHeader.findViewById(R.id.update_time);
         //
-        mRooter=(LinearLayout)LayoutInflater.from(context).inflate(R.layout.refresh_root,null);
-        mRootTextView=(TextView)mRooter.findViewById(R.id.get_more);
+        //mRooter=(LinearLayout)LayoutInflater.from(context).inflate(R.layout.refresh_root,null);
+        //mRootTextView=(TextView)mRooter.findViewById(R.id.get_more);
 
         mTouchSlop= ViewConfiguration.get(context).getScaledTouchSlop();
         mSharedPreferences= PreferenceManager.getDefaultSharedPreferences(context);
@@ -102,7 +114,6 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
         setOrientation(VERTICAL);
         //添加header
         addView(mHeader,0);
-        addView(mRooter,2);
 
     }
 
@@ -120,18 +131,14 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
         //避免重复加载;
         if(changed&&!hasLoaded){
             //设置header隐藏;
-//            mHeaderMarginLayoutParams=(MarginLayoutParams)mHeader.getLayoutParams();
-//            mHeaderMarginLayoutParams.topMargin=-mHeader.getHeight();
-//            mHeader.setLayoutParams(mHeaderMarginLayoutParams);
+            mHeaderMarginLayoutParams=(MarginLayoutParams)mHeader.getLayoutParams();
+            mHeaderMarginLayoutParams.topMargin=-mHeader.getHeight();
+            mHeader.setLayoutParams(mHeaderMarginLayoutParams);
 
-           // mListView = (ListView) this.getChildAt(1);
-            //
-//            mRooterMarginLayoutParams=(MarginLayoutParams)mRooter.getLayoutParams();
-//            mRooterMarginLayoutParams.topMargin=mListView.getHeight()+mRooter.getHeight();
-//            mRooter.setLayoutParams(mRooterMarginLayoutParams);
+            mListView = (ListView) this.getChildAt(1);
 
             if(mListView!=null)
-             //  mListView.setOnTouchListener(this);
+               mListView.setOnTouchListener(this);
             hasLoaded=true;
         }
     }
@@ -207,7 +214,9 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
     //ListView触摸事件;
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        if(canRefresh()||canGetMore())
+        canRefresh();
+        canGetMore();
+        if(canRefresh||canGetMore)
         {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN: {
@@ -218,16 +227,16 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
                     float currentY = event.getRawY();
                     float distance = currentY - mYDown;
                     //下拉;
-                    if(distance>=0){
+                    if(distance>=0&&canRefresh) {
                         //距离小于阈值时候不进行上拉操作;
-                        if(distance<mTouchSlop)
+                        if (distance < mTouchSlop)
                             return false;
                         //控制下拉操作的范围;
-                        if(distance<=600){
+                        if (distance <= 600) {
                             //根据用户移动的距离计算下拉距离;
                             mHeaderMarginLayoutParams.topMargin = (int) distance / 2 - mHeader.getHeight();
                             mHeader.setLayoutParams(mHeaderMarginLayoutParams);
-                            mLastState=mCurrentState;
+                            mLastState = mCurrentState;
                             //根据此时header上边缘的距离判断此时状态;
                             if (mHeaderMarginLayoutParams.topMargin < 0) {
                                 mCurrentState = PULL_TO_REFRESH;
@@ -238,31 +247,33 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
                             setAnimation();
                             //根据状态设置描述信息
                             setHeaderDescription();
-                    }else{
+                        }
+                    }else if(distance<0&&canGetMore){
                             //上拉
                             distance=mYDown-currentY;
                             if(distance<mTouchSlop)
                                 return false;
-                            if(distance<=600){
-
-                            }else{
-                                return false;
-                            }
                         }
-
-
+                        else{
+                        return false;
+                        }
                     }
                     break;
-                }
                 case MotionEvent.ACTION_UP: {
                     if (mCurrentState == PULL_TO_REFRESH) {
+                        canRefresh=false;
                         new HideHeaderTask().execute();
                     } else if (mCurrentState == RELEASE_TO_REFRESH) {
+                        canRefresh=false;
                         mLastState=mCurrentState;
                         mCurrentState=REFRESHING;
                         new RefreshingTask().execute();
-                    } else {
-                        return false;
+                    } else{
+                        Log.d("Refresh111","1");
+                        mCurrentState=PUSH_GET_MORE;
+                        Toast.makeText(mContext,"正在获取更多信息",Toast.LENGTH_SHORT).show();
+                        canGetMore=false;
+                        new GetMoreTask().execute();
                     }
                     break;
                 }
@@ -281,47 +292,67 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
         }
     }
     //判断是否可以进行下拉操作;
-    private boolean canRefresh(){
+    private void canRefresh(){
         View firstChild = mListView.getChildAt(0);
         //只有当前一次刷新操作完毕才进行下次下拉操作
-        if(mCurrentState!=REFRESHING) {
+        if(mCurrentState!=REFRESHING&&mCurrentState!=PUSH_GET_MORE) {
             //如果ListView不为空,则只有当其第一项在最顶端且此时顶端距离父组件为0才允许进行下拉操作;
             if (firstChild != null) {
                 int firstVisiblePos = mListView.getFirstVisiblePosition();
                 if (firstVisiblePos == 0 && firstChild.getTop() == 0) {
-                    return true;
+                    canRefresh=true;
                 } else {
-                    return false;
+                    canRefresh=false;
                 }
             }
             //如果ListView为空时不允许下拉操作;
             else {
-                return false;
+                canRefresh=false;
             }
         }else {
-            return false;
+            canRefresh=false;
         }
     }
 
-    private boolean canGetMore(){
-        View lastChild=mListView.getChildAt(mListView.getCount()-1);
-        if(mCurrentState==REFRESH_COMPLETED||mCurrentState==PUSH_GET_MORE){
+    private void canGetMore(){
+        View lastChild=mListView.getChildAt(mListView.getChildCount()-1);
+        if(mCurrentState!=REFRESHING&&mCurrentState!=PUSH_GET_MORE){
             if(lastChild!=null){
-                int lastVisiblePos=mListView.getLastVisiblePosition();
-                if(lastVisiblePos==mListView.getCount()-1&&lastChild.getBottom()==0){
-                    return true;
+                if(lastChild.getBottom()==mListView.getHeight()){
+                    canGetMore=true;
                 }
                 else{
-                    return false;
+                    canGetMore=false;
                 }
             }
-            else return false;
+            else canGetMore=false;
         }
         else{
-            return false;
+            canGetMore=false;
         }
     }
 
+    private class GetMoreTask extends AsyncTask<Void,Integer,Integer>{
+
+        @Override
+        protected Integer doInBackground(Void... voids) {
+            //
+            if(mGetMoreListener!=null) {
+                mGetMoreListener.onGetMore();
+            }
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            }
+            return null;
+        }
+        @Override
+        protected  void onPostExecute(Integer res){
+            Toast.makeText(mContext,"获取完毕",Toast.LENGTH_SHORT).show();
+            mCurrentState=REFRESH_COMPLETED;
+        }
+    }
     private class HideHeaderTask extends AsyncTask<Void,Integer,Integer>{
 
         @Override
@@ -377,12 +408,6 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
                 }
                 if(mRefreshingListener!=null)
                     mRefreshingListener.onRefresh();
-                try{
-                    Thread.sleep(3000);
-                    //refreshCompleted();
-                }catch (InterruptedException ie){
-                    ie.printStackTrace();
-                }
             }
 
             return null;
@@ -412,8 +437,16 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
     public void setOnRefreshingListener(RefreshingListener refreshingListener){
         mRefreshingListener=refreshingListener;
     }
-    interface RefreshingListener{
+    public interface RefreshingListener{
         void onRefresh();
+    }
+
+   public  interface GetMoreListener{
+        void onGetMore();
+    }
+
+    public void setOnGetMoreListener(GetMoreListener getMoreListener){
+        mGetMoreListener=getMoreListener;
     }
 
 }
