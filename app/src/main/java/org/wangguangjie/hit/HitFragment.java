@@ -272,7 +272,7 @@ public class HitFragment extends Fragment implements Screenable{
             public void onItemClick(AdapterView<?> adapterView, View view, final int position, long l) {
                 Intent intent1=new Intent(getActivity(),WebInformation.class);
                 Bundle bundle=new Bundle();
-                NewItem item=store_lists.getLists().get(position-1);
+                NewItem item=store_lists.getLists().get(position);
                 bundle.putString("url",item.getUrl());
                 intent1.putExtras(bundle);
                 startActivity(intent1);

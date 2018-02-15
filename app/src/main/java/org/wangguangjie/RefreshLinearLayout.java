@@ -286,7 +286,6 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
                         mCurrentState=REFRESHING;
                         new RefreshingTask().execute();
                     } else if(canGetMore){
-                        Log.d("Refresh111","1");
                         mCurrentState=PUSH_GET_MORE;
                         Toast.makeText(mContext,"正在获取更多信息",Toast.LENGTH_SHORT).show();
                         canGetMore=false;
