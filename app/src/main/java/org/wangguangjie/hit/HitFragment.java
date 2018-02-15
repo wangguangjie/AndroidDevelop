@@ -295,7 +295,22 @@ public class HitFragment extends Fragment implements Screenable{
             }
         });
         //加载更多;
-
+        mLinearLayout.setOnGetMoreListener(new RefreshLinearLayout.GetMoreListener() {
+            @Override
+            public void onGetMore() {
+                first=false;
+                if(page_number/10<=pages)
+                {
+                    page_url=url+page_number;
+                    page_number+=10;
+                    new Thread(new getThread()).start();
+                }
+                else
+                {
+                    new Thread(new WastTime()).start();
+                }
+            }
+        });
         Log.d("onCreateView","createView");
         initData();
         // isFistSpinner=true;
@@ -318,16 +333,8 @@ public class HitFragment extends Fragment implements Screenable{
     //主线程显示信息;
     private void showInfo()
     {
-        Log.d("showInfo","show");
-        //判断是否是第一次刷新;
-        if(first) {
-            adapter = new InformationAdapter(getActivity(), store_lists.getLists());
-            listView.setAdapter(adapter);
-        }
-        else
-        {
-            adapter.notifyDataSetChanged();
-        }
+        adapter = new InformationAdapter(getActivity(), store_lists.getLists());
+        listView.setAdapter(adapter);
         //信息获取完毕,技术刷新操作;
         //mLinearLayout.finishRefreshing();
         //listView.getMoreComplete();

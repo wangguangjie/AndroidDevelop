@@ -340,15 +340,11 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
             if(mGetMoreListener!=null) {
                 mGetMoreListener.onGetMore();
             }
-            try {
-                Thread.sleep(10000);
-            } catch (InterruptedException ie) {
-                ie.printStackTrace();
-            }
             return null;
         }
         @Override
         protected  void onPostExecute(Integer res){
+            //mListView.refreshDrawableState();
             Toast.makeText(mContext,"获取完毕",Toast.LENGTH_SHORT).show();
             mCurrentState=REFRESH_COMPLETED;
         }
