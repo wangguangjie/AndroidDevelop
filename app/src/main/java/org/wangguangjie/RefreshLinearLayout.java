@@ -2,8 +2,10 @@ package org.wangguangjie;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Canvas;
 import android.media.Image;
 import android.os.AsyncTask;
+import android.preference.Preference;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -12,11 +14,13 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.w3c.dom.Text;
 import org.wangguangjie.headline.R;
@@ -35,11 +39,12 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
     private int PULL_TO_REFRESH=1;
     private int RELEASE_TO_REFRESH=2;
     private int REFRESHING=3;
+    private int PUSH_GET_MORE=4;
 
     //当前状态;
     private int mCurrentState=REFRESH_COMPLETED;
     //上次状态，用于避免重复操作;
-    private int lastState;
+    private int mLastState;
     //刷新头
     private LinearLayout mHeader;
     //进度条
@@ -50,6 +55,10 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
     private TextView mDescriptionTextView;
     //上次刷新时间
     private TextView mUpdateTimeTextView;
+    //rooter
+    private LinearLayout mRooter;
+    //
+    private TextView mRootTextView;
 
     //在被认为滚动操作之前的最大触摸距离;
     private int mTouchSlop;
@@ -66,10 +75,13 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
     private int mRatio=-10;
     //
     private MarginLayoutParams mHeaderMarginLayoutParams;
+    private MarginLayoutParams mRooterMarginLayoutParams;
     //刷新监听器;
     private RefreshingListener mRefreshingListener;
+
     //
-    private boolean canToPull;
+    final static private String LAST_UPDATE_TIME="last_update_time";
+
 
     public RefreshLinearLayout(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -79,6 +91,10 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
         mImageView=(ImageView)mHeader.findViewById(R.id.arrow);
         mDescriptionTextView=(TextView)mHeader.findViewById(R.id.description);
         mUpdateTimeTextView=(TextView)mHeader.findViewById(R.id.update_time);
+        //
+        mRooter=(LinearLayout)LayoutInflater.from(context).inflate(R.layout.refresh_root,null);
+        mRootTextView=(TextView)mRooter.findViewById(R.id.get_more);
+
         mTouchSlop= ViewConfiguration.get(context).getScaledTouchSlop();
         mSharedPreferences= PreferenceManager.getDefaultSharedPreferences(context);
         hasLoaded=false;
@@ -86,6 +102,7 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
         setOrientation(VERTICAL);
         //添加header
         addView(mHeader,0);
+        addView(mRooter,2);
 
     }
 
@@ -103,19 +120,94 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
         //避免重复加载;
         if(changed&&!hasLoaded){
             //设置header隐藏;
-            mHeaderMarginLayoutParams=(MarginLayoutParams)mHeader.getLayoutParams();
-            mHeaderMarginLayoutParams.topMargin=-mHeader.getHeight();
-            mHeader.setLayoutParams(mHeaderMarginLayoutParams);
-            mListView = (ListView) this.getChildAt(1);
+//            mHeaderMarginLayoutParams=(MarginLayoutParams)mHeader.getLayoutParams();
+//            mHeaderMarginLayoutParams.topMargin=-mHeader.getHeight();
+//            mHeader.setLayoutParams(mHeaderMarginLayoutParams);
+
+           // mListView = (ListView) this.getChildAt(1);
+            //
+//            mRooterMarginLayoutParams=(MarginLayoutParams)mRooter.getLayoutParams();
+//            mRooterMarginLayoutParams.topMargin=mListView.getHeight()+mRooter.getHeight();
+//            mRooter.setLayoutParams(mRooterMarginLayoutParams);
+
             if(mListView!=null)
-               mListView.setOnTouchListener(this);
+             //  mListView.setOnTouchListener(this);
             hasLoaded=true;
         }
     }
 
+    private void setHeaderDescription(){
+        String description="";
+        if(mCurrentState==PULL_TO_REFRESH){
+            description=getResources().getString(R.string.pull_to_refresh);
+        }else if(mCurrentState==RELEASE_TO_REFRESH){
+            description=getResources().getString(R.string.release_to_refresh);
+        }else{
+            description=getResources().getString(R.string.refreshing);
+        }
+        mDescriptionTextView.setText(description);
+    }
+
+    private void setHeaderUpdateTime(){
+        long currentTime=System.currentTimeMillis();
+        long lastTime=mSharedPreferences.getLong(LAST_UPDATE_TIME,-1);
+        String description="";
+        Long time=(currentTime-lastTime)/1000;
+        if(lastTime==-1){
+            description=getResources().getString(R.string.not_updated_yet);
+        }else if(time<60){
+            description=getResources().getString(R.string.updated_just_now);
+        }else if(time<60*60){
+            description=getResources().getString(R.string.updated_at,time/60+"分钟");
+        }else if(time<60*60*24){
+            description=getResources().getString(R.string.updated_at,time/60/60+"小时");
+        }else if(time<60*60*24*30){
+            description=getResources().getString(R.string.updated_at,time/60/60/24+"天");
+        }else if(time<60*60*24*30*12){
+            description=getResources().getString(R.string.updated_at,time/60/60/24/30+"天");
+        }else{
+            description=getResources().getString(R.string.updated_at,time/60/60/24/30/12+"年");
+        }
+        mUpdateTimeTextView.setText(description);
+    }
+
+    //
+    private void setAnimation(){
+        float centerX=mImageView.getWidth()/2;
+        float centerY=mImageView.getHeight()/2;
+        float fromDegree=0;
+        float toDegree=0;
+        if(mCurrentState!=mLastState) {
+            if (mCurrentState == PULL_TO_REFRESH) {
+                mImageView.setVisibility(View.VISIBLE);
+                mProgressBar.setVisibility(View.GONE);
+                fromDegree = 180;
+                toDegree = 360;
+                RotateAnimation animation = new RotateAnimation(fromDegree, toDegree, centerX, centerY);
+                animation.setDuration(100);
+                animation.setFillAfter(true);
+                mImageView.startAnimation(animation);
+            } else if (mCurrentState == RELEASE_TO_REFRESH) {
+                mImageView.setVisibility(View.VISIBLE);
+                mProgressBar.setVisibility(View.GONE);
+                fromDegree = 0;
+                toDegree = 180;
+                RotateAnimation animation = new RotateAnimation(fromDegree, toDegree, centerX, centerY);
+                animation.setDuration(100);
+                animation.setFillAfter(true);
+                mImageView.startAnimation(animation);
+            } else {
+                mImageView.clearAnimation();
+                mImageView.setVisibility(View.GONE);
+                mProgressBar.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+    //ListView触摸事件;
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        canRefresh(event);
+        if(canRefresh()||canGetMore())
         {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN: {
@@ -125,21 +217,40 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
                 case MotionEvent.ACTION_MOVE: {
                     float currentY = event.getRawY();
                     float distance = currentY - mYDown;
-                    if(distance<=0&&mHeaderMarginLayoutParams.topMargin<=(-mHeader.getHeight()))
-                        return false;
-                    if(distance<mTouchSlop)
-                        return false;
-                    if(distance<=600) {
-                        if (mCurrentState == REFRESHING) return false;
-                        else {
+                    //下拉;
+                    if(distance>=0){
+                        //距离小于阈值时候不进行上拉操作;
+                        if(distance<mTouchSlop)
+                            return false;
+                        //控制下拉操作的范围;
+                        if(distance<=600){
+                            //根据用户移动的距离计算下拉距离;
+                            mHeaderMarginLayoutParams.topMargin = (int) distance / 2 - mHeader.getHeight();
+                            mHeader.setLayoutParams(mHeaderMarginLayoutParams);
+                            mLastState=mCurrentState;
+                            //根据此时header上边缘的距离判断此时状态;
                             if (mHeaderMarginLayoutParams.topMargin < 0) {
                                 mCurrentState = PULL_TO_REFRESH;
                             } else {
                                 mCurrentState = RELEASE_TO_REFRESH;
                             }
-                            mHeaderMarginLayoutParams.topMargin = (int) distance / 2 - mHeader.getHeight();
-                            mHeader.setLayoutParams(mHeaderMarginLayoutParams);
+                            //根据状态调整动画
+                            setAnimation();
+                            //根据状态设置描述信息
+                            setHeaderDescription();
+                    }else{
+                            //上拉
+                            distance=mYDown-currentY;
+                            if(distance<mTouchSlop)
+                                return false;
+                            if(distance<=600){
+
+                            }else{
+                                return false;
+                            }
                         }
+
+
                     }
                     break;
                 }
@@ -147,6 +258,8 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
                     if (mCurrentState == PULL_TO_REFRESH) {
                         new HideHeaderTask().execute();
                     } else if (mCurrentState == RELEASE_TO_REFRESH) {
+                        mLastState=mCurrentState;
+                        mCurrentState=REFRESHING;
                         new RefreshingTask().execute();
                     } else {
                         return false;
@@ -155,25 +268,60 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
                 }
                 default:break;
             }
+            //设置上次更新时间;
+            setHeaderUpdateTime();
+            //根据状态调整动画
+            setAnimation();
+            //根据状态设置描述信息
+            setHeaderDescription();
             return true;
         }
-       // return false;
-    }
-    private void canRefresh(MotionEvent event){
-        View firstChild = mListView.getChildAt(0);
-        if (firstChild != null) {
-            int firstVisiblePos = mListView.getFirstVisiblePosition();
-            if (firstVisiblePos == 0 && firstChild.getTop() == 0) {
-                // 如果首个元素的上边缘，距离父布局值为0，就说明ListView滚动到了最顶部，此时应该允许下拉刷新
-                canToPull=true;
-            } else {
-              canToPull=false;
-            }
-        } else {
-            // 如果ListView中没有元素，也应该允许下拉刷新
-           canToPull=true;
+       else{
+            return false;
         }
     }
+    //判断是否可以进行下拉操作;
+    private boolean canRefresh(){
+        View firstChild = mListView.getChildAt(0);
+        //只有当前一次刷新操作完毕才进行下次下拉操作
+        if(mCurrentState!=REFRESHING) {
+            //如果ListView不为空,则只有当其第一项在最顶端且此时顶端距离父组件为0才允许进行下拉操作;
+            if (firstChild != null) {
+                int firstVisiblePos = mListView.getFirstVisiblePosition();
+                if (firstVisiblePos == 0 && firstChild.getTop() == 0) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            //如果ListView为空时不允许下拉操作;
+            else {
+                return false;
+            }
+        }else {
+            return false;
+        }
+    }
+
+    private boolean canGetMore(){
+        View lastChild=mListView.getChildAt(mListView.getCount()-1);
+        if(mCurrentState==REFRESH_COMPLETED||mCurrentState==PUSH_GET_MORE){
+            if(lastChild!=null){
+                int lastVisiblePos=mListView.getLastVisiblePosition();
+                if(lastVisiblePos==mListView.getCount()-1&&lastChild.getBottom()==0){
+                    return true;
+                }
+                else{
+                    return false;
+                }
+            }
+            else return false;
+        }
+        else{
+            return false;
+        }
+    }
+
     private class HideHeaderTask extends AsyncTask<Void,Integer,Integer>{
 
         @Override
@@ -203,7 +351,7 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
         }
         @Override
         protected void onPostExecute(Integer res){
-            mCurrentState=REFRESH_COMPLETED;
+            refreshCompleted();
         }
     }
 
@@ -229,6 +377,12 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
                 }
                 if(mRefreshingListener!=null)
                     mRefreshingListener.onRefresh();
+                try{
+                    Thread.sleep(3000);
+                    //refreshCompleted();
+                }catch (InterruptedException ie){
+                    ie.printStackTrace();
+                }
             }
 
             return null;
@@ -238,14 +392,13 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
         protected void onProgressUpdate(Integer... topMargin){
             mHeaderMarginLayoutParams.topMargin=topMargin[0];
             mHeader.setLayoutParams(mHeaderMarginLayoutParams);
-            if(topMargin[0]==0){
-                refreshCompleted();
-            }
         }
 
         @Override
         protected void onPostExecute(Integer res){
-           // refreshCompleted();
+            mSharedPreferences.edit().putLong(LAST_UPDATE_TIME,System.currentTimeMillis()).commit();
+            refreshCompleted();
+            setAnimation();
         }
     }
 
