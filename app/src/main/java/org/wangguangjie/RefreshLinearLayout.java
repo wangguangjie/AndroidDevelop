@@ -246,6 +246,8 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
                         //距离小于阈值时候不进行上拉操作;
                         if (distance <= mTouchSlop)
                             return false;
+                        if(mHeaderMarginLayoutParams.topMargin<-mHeader.getHeight())
+                            return false;
                         //控制下拉操作的范围;
                         if (distance <= 600) {
                             //根据用户移动的距离计算下拉距离;
@@ -289,6 +291,8 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
                         Toast.makeText(mContext,"正在获取更多信息",Toast.LENGTH_SHORT).show();
                         canGetMore=false;
                         new GetMoreTask().execute();
+                    }else{
+                        return false;
                     }
                     break;
                 }
