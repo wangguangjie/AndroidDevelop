@@ -2,10 +2,7 @@ package org.wangguangjie;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Canvas;
-import android.media.Image;
 import android.os.AsyncTask;
-import android.preference.Preference;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -22,13 +19,29 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.w3c.dom.Text;
 import org.wangguangjie.headline.R;
-
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by wangguangjie on 2018/2/14.
+ * 自主开发的下拉刷新，支持下拉进行刷新和上拉获取更多。
+ * 功能：
+ *     1.下拉刷新
+ *     2.上拉加载更多
+ * 特色：
+ *    1.界面简单，可靠，代码健壮，支持扩展.
+ * 开发难点：
+ *    1.首先需要判断是否可以下拉刷新和上拉加载更多，判断方法分别为通过ListView可见第一项是否为0和顶端距离是否为0（以便第一项全部出现），
+ *    和判断List最后一项低端距离是否为ListVIew的高度进行判断.
+ *    2.在判断是否可以下拉刷新和上拉加载更多的时候，防止多线程范围共同变量造成程序错误，在正在刷新时候不进行上拉加载更多，正在上拉加载更多时候不进行
+ *    下拉刷新，通知避免通多个下拉刷新和多个上拉加载更多，也就是在进行刷新时无法下拉刷新，在加载更多的时候无法上拉加载更多。
+ *    3.下拉刷新释放时采用异步任务动态改变刷新头的状态
+ *    4.释放刷新时释放进行刷新采用异步任务进行动态改变刷新头的状态，通知当刷新头上侧与父视图上侧对齐时进行刷新任务，刷新任务结束后与下拉刷新一样的
+ *    5.上拉获取更多信息时同时采用异步任务获取更多信息，上拉获取更多和获取结束通知用户具有更强的用户交互性。
+ * 使用：
+ *    1.RefreshLinearlayout继续Linearlayout，拥有LinearLayout的全部功能，在使用上和LinearLayout区别不大.
+ *    2.在调用下拉刷新和上拉加载更多功能时候，只需要实现RefreshingListener和GetMoreListener监听器即可，并注册监听器。
+ * 扩展：
+ *    以后有需求，可以添加功能更强的下拉刷新，同时设计更美观的动画或者更好的布局，最基本的保证是足够健壮性.
  */
 
 public class RefreshLinearLayout extends LinearLayout implements View.OnTouchListener{
@@ -214,6 +227,8 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
     //ListView触摸事件;
     @Override
     public boolean onTouch(View v, MotionEvent event) {
+        canRefresh=false;
+        canGetMore=false;
         canRefresh();
         canGetMore();
         if(canRefresh||canGetMore)
@@ -229,7 +244,7 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
                     //下拉;
                     if(distance>=0&&canRefresh) {
                         //距离小于阈值时候不进行上拉操作;
-                        if (distance < mTouchSlop)
+                        if (distance <= mTouchSlop)
                             return false;
                         //控制下拉操作的范围;
                         if (distance <= 600) {
@@ -254,7 +269,7 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
                             if(distance<mTouchSlop)
                                 return false;
                         }
-                        else{
+                    else{
                         return false;
                         }
                     }
@@ -268,7 +283,7 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
                         mLastState=mCurrentState;
                         mCurrentState=REFRESHING;
                         new RefreshingTask().execute();
-                    } else{
+                    } else if(canGetMore){
                         Log.d("Refresh111","1");
                         mCurrentState=PUSH_GET_MORE;
                         Toast.makeText(mContext,"正在获取更多信息",Toast.LENGTH_SHORT).show();
@@ -314,21 +329,30 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
         }
     }
 
+//    private void canGetMore(){
+//        View lastChild=mListView.getChildAt(mListView.getChildCount()-1);
+//        if(mCurrentState!=REFRESHING&&mCurrentState!=PUSH_GET_MORE){
+//            if(lastChild!=null){
+//                if(lastChild.getBottom()==mListView.getHeight()){
+//                    canGetMore=true;
+//                }
+//                else{
+//                    canGetMore=false;
+//                }
+//            }
+//            else canGetMore=false;
+//        }
+//        else{
+//            canGetMore=false;
+//        }
+//    }
+
+    //首先判断可见的最下面的View是否是最后一个，如果是则说明已经滑到最后一项了，再判断此时最后一个View视图的底部和父控件的顶部边缘的距离，如果恰好是屏幕大小则说明无法再继续滑到.
     private void canGetMore(){
-        View lastChild=mListView.getChildAt(mListView.getChildCount()-1);
-        if(mCurrentState!=REFRESHING&&mCurrentState!=PUSH_GET_MORE){
-            if(lastChild!=null){
-                if(lastChild.getBottom()==mListView.getHeight()){
-                    canGetMore=true;
-                }
-                else{
-                    canGetMore=false;
-                }
-            }
-            else canGetMore=false;
-        }
-        else{
-            canGetMore=false;
+        if(mListView.getLastVisiblePosition()==(mListView.getCount()-1)){
+            View bottomView=mListView.getChildAt(mListView.getLastVisiblePosition()-
+                    mListView.getFirstVisiblePosition());
+            canGetMore=(mListView.getHeight()==bottomView.getBottom());
         }
     }
 

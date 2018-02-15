@@ -309,7 +309,4 @@ public class MainActivity extends AppCompatActivity{
             getSupportFragmentManager().beginTransaction().replace(R.id.content_frame,mHitFragment).commit();
         }
     }
-    public void setFragmentReource(){
-
-    }
 }

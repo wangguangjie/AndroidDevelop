@@ -36,7 +36,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.wangguangjie.RefreshLinearLayout;
-import org.wangguangjie.RefreshableView;
 import org.wangguangjie.headline.R;
 import org.wangguangjie.sidemenu.interfaces.Screenable;
 
@@ -333,8 +332,16 @@ public class HitFragment extends Fragment implements Screenable{
     //主线程显示信息;
     private void showInfo()
     {
-        adapter = new InformationAdapter(getActivity(), store_lists.getLists());
-        listView.setAdapter(adapter);
+        Log.d("showInfo","show");
+        //判断是否是第一次刷新;
+        if(first) {
+            adapter = new InformationAdapter(getActivity(), store_lists.getLists());
+            listView.setAdapter(adapter);
+        }
+        else
+        {
+            adapter.notifyDataSetChanged();
+        }
         //信息获取完毕,技术刷新操作;
         //mLinearLayout.finishRefreshing();
         //listView.getMoreComplete();
