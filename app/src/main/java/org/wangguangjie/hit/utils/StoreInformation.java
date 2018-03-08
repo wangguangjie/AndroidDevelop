@@ -1,6 +1,8 @@
-package org.wangguangjie.hit;
+package org.wangguangjie.hit.utils;
 
 import android.content.SharedPreferences;
+
+import org.wangguangjie.hit.model.NewItem;
 
 import java.util.ArrayList;
 

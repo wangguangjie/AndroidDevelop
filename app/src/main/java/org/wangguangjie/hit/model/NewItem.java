@@ -1,4 +1,4 @@
-package org.wangguangjie.hit;
+package org.wangguangjie.hit.model;
 
 /**
  * Created by wangguangjie on 16/9/28.

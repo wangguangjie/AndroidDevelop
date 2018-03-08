@@ -1,4 +1,4 @@
-package org.wangguangjie.hit;
+package org.wangguangjie.hit.controller;
 
 import android.animation.Animator;
 import android.app.Activity;

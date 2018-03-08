@@ -1,16 +1,12 @@
 package org.wangguangjie.hit;
 
 import android.animation.Animator;
-import android.app.ActionBar;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -23,10 +19,7 @@ import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
 import org.jsoup.Connection;
@@ -34,7 +27,12 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.wangguangjie.RefreshLinearLayout;
 import org.wangguangjie.headline.R;
+import org.wangguangjie.hit.controller.InformationAdapter;
+import org.wangguangjie.hit.controller.WebInformation;
+import org.wangguangjie.hit.model.NewItem;
+import org.wangguangjie.hit.utils.StoreInformation;
 import org.wangguangjie.sidemenu.interfaces.Screenable;
 
 import static android.content.Context.MODE_PRIVATE;
@@ -59,12 +57,6 @@ public class HitFragment extends Fragment implements Screenable{
     private String url4 = HIT4 + "?maxPageItems=10&keywords=&pager.offset=";
     private String url5 = HIT5 + "?maxPageItems=10&keywords=&pager.offset=";
 
-    private String className1="announcement";
-    private String className2="newsletters";
-    private String className3="";
-    private String className4="";
-    private String className5="";
-    private String className6="";
     //
     private String url = url1;
     private String page_url;
@@ -75,25 +67,18 @@ public class HitFragment extends Fragment implements Screenable{
 
     final private String HIT = "http://www.hitsz.edu.cn";
     //
-    private PullListView listView;
+    private ListView listView;
     //
     private InformationAdapter adapter;
     //
     private boolean first;
     //
-    private int select;
-    //主线程执行信息显示,如果出现异常情况通知用户;
-    SpinnerAdapter spinnerAdapter;
-    ActionBar.OnNavigationListener navigationListener;
-    ActionBar actionBar;
-    Spinner mSpinner;
     private View frgamentView;
-    private int position;
-    private boolean isRecover;
 
     private Bitmap mBitmap;
     private View mContainerView;
-    private String res;
+
+    private RefreshLinearLayout mLinearLayout;
 
     private Handler handler = new Handler() {
         @Override
@@ -119,7 +104,7 @@ public class HitFragment extends Fragment implements Screenable{
             //如果无更多页面不许进行加载更多;
             else if (msg.what == 0x125) {
                 Toast.makeText(getActivity(), "无更多信息!", Toast.LENGTH_LONG).show();
-                listView.getMoreComplete();
+               // listView.getMoreComplete();
             }
             //处理异常信息;
             else if (msg.what == 0x111) {
@@ -259,37 +244,32 @@ public class HitFragment extends Fragment implements Screenable{
     public View onCreateView(LayoutInflater inflater, ViewGroup viewGroup,Bundle bundle){
         Log.d("test","fragment onCreateView");
         View rootView=inflater.inflate(R.layout.pulllist,viewGroup,false);
-        listView=(PullListView) rootView.findViewById(R.id.hitfragment_container);
-        listView.addSharePreference(getActivity().getSharedPreferences("refresh_date",MODE_PRIVATE));
-        //根据用户选择不同的打开方式;
+        mLinearLayout=(RefreshLinearLayout) rootView;
+        listView=(ListView)rootView.findViewById(R.id.hitfragment_container);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, final int position, long l) {
+            public void onItemClick(AdapterView<?> adapterView, View view, final int position, long l){
                 Intent intent1=new Intent(getActivity(),WebInformation.class);
                 Bundle bundle=new Bundle();
-                NewItem item=store_lists.getLists().get(position-1);
+                NewItem item=store_lists.getLists().get(position);
                 bundle.putString("url",item.getUrl());
                 intent1.putExtras(bundle);
                 startActivity(intent1);
             }
         });
         //刷新;
-        listView.setOnRefreshListener(new PullListView.OnRefreshListener() {
+        mLinearLayout.setOnRefreshingListener(new RefreshLinearLayout.RefreshingListener() {
             @Override
             public void onRefresh() {
                 first=true;
                 page_number=0;
                 page_url=url+page_number;
                 page_number+=10;
-                //page_number++;
-                //page_url+=page_number;
-                //pages=0;
-                //lists.clear();
                 new Thread(new getThread()).start();
             }
-        },1);
+        });
         //加载更多;
-        listView.setOnGetMoreListener(new PullListView.OnGetMoreListener() {
+        mLinearLayout.setOnGetMoreListener(new RefreshLinearLayout.GetMoreListener() {
             @Override
             public void onGetMore() {
                 first=false;
@@ -303,7 +283,6 @@ public class HitFragment extends Fragment implements Screenable{
                 {
                     new Thread(new WastTime()).start();
                 }
-
             }
         });
         Log.d("onCreateView","createView");
@@ -314,28 +293,6 @@ public class HitFragment extends Fragment implements Screenable{
 
     private void initData(){
         store_lists = new StoreInformation(getActivity().getSharedPreferences("hit1", MODE_PRIVATE));
-        //加载缓存数据,但是会造成线程同步问题，不建议使用，解决方法可在后面让主线程睡眠小段时间，目的是让这个子线程能够把数据加载完成;
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                store_lists.recoveryData();
-//                Log.d("thread1",store_lists.getLists().size()+"");
-//                if (store_lists.getLists().size() > 0) {
-//                    Message msg = new Message();
-//                    msg.what = 0x126;
-//                    handler.sendMessage(msg);
-//                }
-//            }
-//        }).start();
-//      try{
-//          Thread.sleep(1000);
-//
-//      }catch (InterruptedException ie)
-//      {
-//          ie.printStackTrace();
-//      }
-        //相比于上一种方法，此种方法我觉得更合适，因为效果是一样的，但是不会存在线程同步的问题.
-        //数据恢复;
         store_lists.recoveryData();
         //如果有数据则加载（此种处理，包括上面注释的处理的目的都在于认为内存中加载的数据比网络获取数据更快，可以避免让用户长时间等待而看不到数据）
         if (store_lists.getLists().size() > 0) {
@@ -343,8 +300,6 @@ public class HitFragment extends Fragment implements Screenable{
             listView.setAdapter(adapter);
             listView.deferNotifyDataSetChanged();
         }
-
-        //new Thread(new getThread()).start();
     }
 
     //主线程显示信息;
@@ -360,10 +315,6 @@ public class HitFragment extends Fragment implements Screenable{
         {
             adapter.notifyDataSetChanged();
         }
-        //信息获取完毕,技术刷新操作;
-        listView.refreshComplete();
-        listView.getMoreComplete();
-        //刷新动画;
         if(first&&frgamentView!=null) {
             View view1 = frgamentView;
             int[] location = {0, 0};
@@ -396,7 +347,6 @@ public class HitFragment extends Fragment implements Screenable{
     }
 
     //直接从获取页码的document进行解析;
-    //本程序采用这种方法解析html;
     public void  analyHtml()
     {
         Connection connect = Jsoup.connect(page_url);
@@ -552,7 +502,7 @@ public class HitFragment extends Fragment implements Screenable{
     }
 
     @Override
-    public Bitmap getScreenBimap() {
+    public Bitmap getScreenBitmap() {
         return mBitmap;
     }
 }

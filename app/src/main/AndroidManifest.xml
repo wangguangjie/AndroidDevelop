@@ -21,12 +21,13 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name="org.wangguangjie.hit.WebInformation"/>
+        <activity android:name="org.wangguangjie.hit.controller.WebInformation"/>
         <activity android:name="org.wangguangjie.crime.controler.CrimeListActivity" android:theme="@style/CompatTheme">
         </activity>
         <activity android:name="org.wangguangjie.crime.controler.CrimePageActivity"
             android:theme="@style/CompatTheme"
             android:parentActivityName="org.wangguangjie.crime.controler.CrimeListActivity"/>
+        <activity android:name="org.wangguangjie.test.TestActivity"/>
     </application>
 
 </manifest>
