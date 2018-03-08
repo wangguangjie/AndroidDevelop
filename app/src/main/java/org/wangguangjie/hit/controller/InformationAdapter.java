@@ -1,4 +1,4 @@
-package org.wangguangjie.hit;
+package org.wangguangjie.hit.controller;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -9,6 +9,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.wangguangjie.headline.R;
+import org.wangguangjie.hit.model.NewItem;
 
 import java.util.ArrayList;
 

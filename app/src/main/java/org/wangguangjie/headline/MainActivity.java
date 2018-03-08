@@ -74,14 +74,10 @@ public class MainActivity extends AppCompatActivity{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d("test","onCreate");
         setContentView(R.layout.activity_main);
-        //mBundle=savedInstanceState;
-        //初始化值;
         initValues();
         //初始化视图;
         initView();
-        Log.d("test","test");
     }
 
     @Override
@@ -122,11 +118,7 @@ public class MainActivity extends AppCompatActivity{
     @Override
     public void onSaveInstanceState(Bundle b){
         super.onSaveInstanceState(b);
-        //mHitFragment=new HitFragment();
         Log.d("test","onSaveInstanceState");
-        //mHitFragment.setSpinner(mSpinner);
-        //mHitFragment.setFrgamentView(content_frame);
-        //getSupportFragmentManager().beginTransaction().replace(R.id.content_frame,mHitFragment).commit();
     }
     private void initValues(){
         mDrawerLayout=(DrawerLayout)findViewById(R.id.drawerlayout);
@@ -167,28 +159,15 @@ public class MainActivity extends AppCompatActivity{
         mTitle="title1";
         mIcon=R.drawable.log1;
         mLog=R.mipmap.icon_hit;
-        setActionBar();
-    }
-    private void setActionBar(){
         mToolbar.setTitle("HIT官网");
         mToolbar.setTitleTextColor(getResources().getColor(R.color.colorAccent));
         mToolbar.setLogo(mLog);
-        mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
         setSupportActionBar(mToolbar);
         ActionBar actionBar=getSupportActionBar();
         actionBar.setHomeButtonEnabled(true);
         actionBar.setDisplayHomeAsUpEnabled(true);
     }
+
     private void initSideMenu(){
         //设置菜单项;
         setItems();

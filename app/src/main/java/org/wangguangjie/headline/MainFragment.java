@@ -83,7 +83,7 @@ public class MainFragment extends Fragment implements Screenable{
     }
 
     @Override
-    public Bitmap getScreenBimap() {
+    public Bitmap getScreenBitmap() {
         return mBitmap;
     }
 }

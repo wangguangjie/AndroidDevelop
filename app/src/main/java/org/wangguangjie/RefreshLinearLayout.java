@@ -30,18 +30,29 @@ import org.wangguangjie.headline.R;
  * 特色：
  *    1.界面简单，可靠，代码健壮，支持扩展.
  * 开发难点：
- *    1.首先需要判断是否可以下拉刷新和上拉加载更多，判断方法分别为通过ListView可见第一项是否为0和顶端距离是否为0（以便第一项全部出现），
- *    和判断List最后一项低端距离是否为ListVIew的高度进行判断.
- *    2.在判断是否可以下拉刷新和上拉加载更多的时候，防止多线程范围共同变量造成程序错误，在正在刷新时候不进行上拉加载更多，正在上拉加载更多时候不进行
- *    下拉刷新，通知避免通多个下拉刷新和多个上拉加载更多，也就是在进行刷新时无法下拉刷新，在加载更多的时候无法上拉加载更多。
- *    3.下拉刷新释放时采用异步任务动态改变刷新头的状态
- *    4.释放刷新时释放进行刷新采用异步任务进行动态改变刷新头的状态，通知当刷新头上侧与父视图上侧对齐时进行刷新任务，刷新任务结束后与下拉刷新一样的
- *    5.上拉获取更多信息时同时采用异步任务获取更多信息，上拉获取更多和获取结束通知用户具有更强的用户交互性。
+ *    1.首先需要判断是否可以下拉刷新和上拉加载更多，判断方法分别为通过ListView可见第一项位置是否为0和顶端距离与父布局的距离是否为0
+ *    （以便第一项全部出现），判断ListView可见最后一项的位置是否是最后一项，再判断可见最后一项的低端和父布局的上边缘的距离是否为ListView的
+ *    高度(也就是判断最后一项是否完全滑到底),注意:要对第一项和最后一项进行非空判断,否则当ListView为空时，会出现空指针异常.
+ *    2.在判断是否可以下拉刷新和上拉加载更多的时候，防止多线程访问共同变量造成程序异常，在正在刷新时候不进行上拉加载更多，正在上拉加载更多时候不进行
+ *    下拉刷新，也就是在判断是否能够进行下拉刷新或者上拉加载更多时，只有此时状态为完成状态才进行此两项操作，保证程序的可靠性。
+ *    3.下拉刷新释放时采用异步任务动态隐藏刷新头的状态，
+ *    4.释放刷新时释放进行刷新采用异步任务进行动态改变刷新头的状态，通知当刷新头上侧与父视图上侧对齐时进行刷新任务，调用刷新监听执行具体任务，
+ *    刷新任务结束后与下拉刷新一样的
+ *    5.上拉获取更多信息时同时采用异步任务获取更多信息，上拉获取更多和获取结束通知用户具有更强的用户交互性，此处应该得到改进，使用和header一样的机制
+ *    感觉体验会更好。
  * 使用：
- *    1.RefreshLinearlayout继续Linearlayout，拥有LinearLayout的全部功能，在使用上和LinearLayout区别不大.
- *    2.在调用下拉刷新和上拉加载更多功能时候，只需要实现RefreshingListener和GetMoreListener监听器即可，并注册监听器。
+ *    1.RefreshLinearLayout继承LinearLayout，拥有LinearLayout的全部功能，在使用上和LinearLayout区别不大.
+ *    2.在调用下拉刷新和上拉加载更多功能时候，只需要实现RefreshingListener和GetMoreListener监听器即可，并注册监听器。而且监听里面的执行是
+ *    在子线程中完成的，所以在使用时不必要重新开线程.
  * 扩展：
  *    以后有需求，可以添加功能更强的下拉刷新，同时设计更美观的动画或者更好的布局，最基本的保证是足够健壮性.
+ * Bug修复：
+ *    1.在下拉又上滑后出现header无法完全隐藏，此时对此时间不进行处理，也即header无法恢复到初始位置,修复：在退出触摸时间时，重新恢复设置header的位置；
+ *    2.判断ListView是否滑动到低端时判断出错。
+ *    3.点击操作出现错误，应该屏蔽点击操作.
+ *    4.在ListView选项为空时，下拉刷新或者上拉加载更多出现错误，修复:对onTouch进行修改，在判断是否为上拉刷新时存在错误(空指针异常），同时对
+ *    onTouch进行重写了一部分，即当时按下时才判断是否可以下拉或者上拉，以后的都不进行判断，节省了响应时间，同时逻辑上更好理解(因为在判断是否上拉
+ *    或者下拉时需要判断此时状态，只有此时状态为刷新完成时才可以响应此操作).
  */
 
 public class RefreshLinearLayout extends LinearLayout implements View.OnTouchListener{
@@ -244,8 +255,12 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
                     //下拉;
                     if(distance>=0&&canRefresh) {
                         //距离小于阈值时候不进行上拉操作;
-                        if (distance <= mTouchSlop)
+                        if (distance <= mTouchSlop){
+                            //小bug：特别注意可能由于distance太小导致退出触摸时间，从而distance无法为0，导致header无法复原.
+                            mHeaderMarginLayoutParams.topMargin=(- mHeader.getHeight());
+                            mHeader.setLayoutParams(mHeaderMarginLayoutParams);
                             return false;
+                        }
                         if(mHeaderMarginLayoutParams.topMargin<-mHeader.getHeight())
                             return false;
                         //控制下拉操作的范围;
@@ -271,9 +286,14 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
                             if(distance<mTouchSlop)
                                 return false;
                         }
-                    else{
+                    else if(distance<0){
+                        mHeaderMarginLayoutParams.topMargin=(- mHeader.getHeight());
+                        mHeader.setLayoutParams(mHeaderMarginLayoutParams);
                         return false;
                         }
+                    else{
+                        return false;
+                      }
                     }
                     break;
                 case MotionEvent.ACTION_UP: {

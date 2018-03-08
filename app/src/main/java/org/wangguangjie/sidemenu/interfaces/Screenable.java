@@ -10,5 +10,5 @@ import android.graphics.Bitmap;
 
 public interface Screenable {
     void takeScreen();
-    Bitmap getScreenBimap();
+    Bitmap getScreenBitmap();
 }
