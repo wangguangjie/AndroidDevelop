@@ -102,13 +102,7 @@ public class HitFragment extends Fragment implements Screenable{
         public void handleMessage(Message msg) {
             //更改解析出信息,更新界面;
             if (msg.what == 0x123) {
-                showInfo();
-                //缓存数据;
-                new Thread(){
-                    public void run(){
-                        store_lists.storeData();
-                    }
-                }.start();
+                updateUI();
             }
             //通过actionbar的选择进行解析数据
             else if (msg.what == 0x124) {
@@ -122,6 +116,10 @@ public class HitFragment extends Fragment implements Screenable{
             else if (msg.what == 0x125) {
                 Toast.makeText(getActivity(), "无更多信息!", Toast.LENGTH_LONG).show();
                // listView.getMoreComplete();
+            }else if(msg.what==0x126){
+                adapter = new InformationAdapter(getContext(), store_lists.getLists());
+                listView.setAdapter(adapter);
+                listView.deferNotifyDataSetChanged();
             }
             //处理异常信息;
             else if (msg.what == 0x111) {
@@ -147,31 +145,30 @@ public class HitFragment extends Fragment implements Screenable{
         }
     }
 
-    class WastTime implements Runnable {
-
+    //异步加载缓存数据;
+    class RecoveryThread implements Runnable {
         @Override
         public void run() {
-            try {
-                Thread.sleep(2000);
-                Message message = new Message();
-                message.what = 0x125;
-                handler.sendMessage(message);
-            } catch (InterruptedException ie) {
-                ie.printStackTrace();
-            }
+            store_lists.recoveryData();
+            Message msg = new Message();
+            msg.what = 0x126;
+            handler.sendMessage(msg);
         }
     }
 
-
-    public void setFrgamentView(View view){
+    public void setFragmentView(View view){
         frgamentView=view;
     }
 
     @Override
     public void onCreate(Bundle saveInstance){
         super.onCreate(saveInstance);
+        //初始化数据;
+        first=true;
+        page_number=0;
+        page_url=url+page_number;
+        page_number+=10;
         Log.d("test","fragment onCreate");
-        initValues();
     }
     @Override
     public void onAttach(Context context){
@@ -221,13 +218,6 @@ public class HitFragment extends Fragment implements Screenable{
         super.onDetach();
         Log.d("test","fragment onDetach");
     }
-    public void initValues(){
-        first=true;
-        page_number=0;
-        page_url=url+page_number;
-        page_number+=10;
-        //isFistSpinner=true;
-    }
     public void onItemSelected(int position){
         switch (position)
         {
@@ -249,19 +239,16 @@ public class HitFragment extends Fragment implements Screenable{
             default:
                 break;
         }
-        //if(!isFirst)
-        {
-            Message msg = new Message();
-            msg.what = 0x124;
-            handler.sendMessage(msg);
-        }
+        Message msg = new Message();
+        msg.what = 0x124;
+        handler.sendMessage(msg);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup viewGroup,Bundle bundle){
         Log.d("test","fragment onCreateView");
         View rootView=inflater.inflate(R.layout.pulllist,viewGroup,false);
-        mLinearLayout=(RefreshLinearLayout) rootView;
+        mLinearLayout=(RefreshLinearLayout) rootView.findViewById(R.id.refresh_linear_layout);
         listView=(ListView)rootView.findViewById(R.id.hitfragment_container);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -274,7 +261,7 @@ public class HitFragment extends Fragment implements Screenable{
                 startActivity(intent1);
             }
         });
-        //刷新;
+        //注册下拉刷新监听器;
         mLinearLayout.setOnRefreshingListener(new RefreshLinearLayout.RefreshingListener() {
             @Override
             public void onRefresh() {
@@ -282,56 +269,36 @@ public class HitFragment extends Fragment implements Screenable{
                 page_number=0;
                 page_url=url+page_number;
                 page_number+=10;
-                new Thread(new getThread()).start();
+                getMessage();
+                //缓存最新数据;
+                store_lists.storeData();
             }
         });
-        //加载更多;
+        //注册上拉加载更多监听器;
         mLinearLayout.setOnGetMoreListener(new RefreshLinearLayout.GetMoreListener() {
             @Override
             public void onGetMore() {
                 first=false;
-                if(page_number/10<=pages)
-                {
-                    page_url=url+page_number;
-                    page_number+=10;
-                    new Thread(new getThread()).start();
-                }
-                else
-                {
-                    new Thread(new WastTime()).start();
+                if(page_number/10<=pages){
+                    page_url = url + page_number;
+                    page_number += 10;
+                    getMessage();
+                    //缓存最新数据
+                    store_lists.storeData();
                 }
             }
         });
-        Log.d("onCreateView","createView");
-        initData();
-        // isFistSpinner=true;
+        store_lists = new StoreInformation(getActivity().getSharedPreferences("hit1", MODE_PRIVATE));
+        //开启恢复线程，恢复本地数据;
+        new Thread(new RecoveryThread()).start();
         return rootView;
     }
 
-    private void initData(){
-        store_lists = new StoreInformation(getActivity().getSharedPreferences("hit1", MODE_PRIVATE));
-        store_lists.recoveryData();
-        //如果有数据则加载（此种处理，包括上面注释的处理的目的都在于认为内存中加载的数据比网络获取数据更快，可以避免让用户长时间等待而看不到数据）
-        if (store_lists.getLists().size() > 0) {
-            adapter = new InformationAdapter(getActivity(), store_lists.getLists());
-            listView.setAdapter(adapter);
-            listView.deferNotifyDataSetChanged();
-        }
-    }
-
     //主线程显示信息;
-    private void showInfo()
+    private void updateUI()
     {
-        Log.d("showInfo","show");
-        //判断是否是第一次刷新;
-        if(first) {
-            adapter = new InformationAdapter(getActivity(), store_lists.getLists());
-            listView.setAdapter(adapter);
-        }
-        else
-        {
-            adapter.notifyDataSetChanged();
-        }
+        adapter.notifyDataSetChanged();
+        //动画显示更新;
         if(first&&frgamentView!=null) {
             View view1 = frgamentView;
             int[] location = {0, 0};
@@ -348,9 +315,10 @@ public class HitFragment extends Fragment implements Screenable{
     //获取网络信息;
     private void getMessage()
     {
+        //判断网络是否可用;
         if(isNetWorkAvailable())
         {
-            analyHtml();
+            analyzeHtml();
             Message msg = new Message();
             msg.what = 0x123;
             handler.sendMessage(msg);
@@ -364,7 +332,7 @@ public class HitFragment extends Fragment implements Screenable{
     }
 
     //直接从获取页码的document进行解析;
-    public void  analyHtml()
+    public void  analyzeHtml()
     {
         Connection connect = Jsoup.connect(page_url);
         //伪装成浏览器对url进行访问,防止无法获取某些网站的document;
@@ -376,7 +344,7 @@ public class HitFragment extends Fragment implements Screenable{
             //解析出body 标签下的div标签;
             Elements elements = doc.select("body ul");
             Log.d("mylogcat2","2");
-            //上拉刷新或者第一次刷新,清除数据;
+            //下拉更新清除数据;
             if(first)
             {
                 store_lists.clear();

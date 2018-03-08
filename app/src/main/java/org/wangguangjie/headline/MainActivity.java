@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity{
         {
             mHitFragment = new HitFragment();
         }
-        mHitFragment.setFrgamentView(content_frame);
+        mHitFragment.setFragmentView(content_frame);
         getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, mHitFragment).commit();
         //设置spinner监听器;
         mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -253,7 +253,7 @@ public class MainActivity extends AppCompatActivity{
                 if(mHitFragment==null)
                 {
                     mHitFragment=new HitFragment();
-                    mHitFragment.setFrgamentView(content_frame);
+                    mHitFragment.setFragmentView(content_frame);
                 }
                 getSupportFragmentManager().beginTransaction().replace(R.id.content_frame,mHitFragment).commit();
             }
