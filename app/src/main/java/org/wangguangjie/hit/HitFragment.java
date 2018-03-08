@@ -39,6 +39,23 @@ import static android.content.Context.MODE_PRIVATE;
 
 /**
  * Created by wangguangjie on 2017/8/31.
+ * 开发的一款获取HIT官网文档信息，并且通过jsoup解析文本信息并显示出具官网信息
+ * 功能：
+ *    1.首页查看官网各个条目的简要信息
+ *    2.点击选项可查看具体的消息
+ *    3.支持下拉刷新和上拉加载更多
+ *    4.本地缓存部分数据，提高用户体验
+ * 后期改进：
+ *    1.对选项条目进行重新设计，使用TableLayout和ViewPager
+ *    2.添加收藏功能，选项增加收藏条目.
+ *    3.使用SQLite对数据进行操作
+ * 开发难点：
+ *
+ * Bug及修复
+ *     1.由于注册RefreshLinearLayout的上拉和下拉监听器时，又开启了新的子线程，导致数据访问异常.
+ *     2.在Spinner加载时候就进行回调了依次选项选择监听器，刚打开应用时重复加载数据.
+ *
+ *
  */
 
 public class HitFragment extends Fragment implements Screenable{
