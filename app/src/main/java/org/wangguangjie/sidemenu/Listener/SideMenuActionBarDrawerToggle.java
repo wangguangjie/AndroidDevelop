@@ -1,5 +1,6 @@
 package org.wangguangjie.sidemenu.Listener;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Handler;
 import android.support.v4.widget.DrawerLayout;
@@ -11,9 +12,9 @@ import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import org.wangguangjie.headline.R;
-import org.wangguangjie.sidemenu.interfaces.Screenable;
 import org.wangguangjie.sidemenu.model.SideItem;
 
 import java.util.ArrayList;
@@ -27,41 +28,35 @@ import java.util.List;
 public abstract class SideMenuActionBarDrawerToggle extends ActionBarDrawerToggle {
 
     private List<SideItem> items;
-    private LinearLayout mdrawerContainer;
-    private Screenable mScreenable;
+    private LinearLayout mDrawerContainer;
     private DrawerLayout mDrawerLayout;
     //private SideMenu.SideMenuListener mSideMenuListener;
-    private AppCompatActivity mainAcitivity;
+    private AppCompatActivity mainActivity;
     private List<View> menuVies=new ArrayList<>();
 
     final static int UNIT=150;
 
     public boolean isClosed;
-    //private boolean isGone=false;
+
 
     public SideMenuActionBarDrawerToggle(AppCompatActivity appCompatActivity,
-                                         DrawerLayout drawerLayout, Toolbar toolbar,int s1,int s2,LinearLayout line,List<SideItem>list,
-                                         Screenable screenable){
+                                         DrawerLayout drawerLayout, Toolbar toolbar,int s1,int s2,LinearLayout line,List<SideItem>list){
         super(appCompatActivity,drawerLayout,toolbar,s1,s2);
-        this.mainAcitivity=appCompatActivity;
+        this.mainActivity=appCompatActivity;
         this.mDrawerLayout=drawerLayout;
-        this.mdrawerContainer=line;
+        this.mDrawerContainer=line;
         this.items=list;
-        this.mScreenable=screenable;
     }
 
     //滑出sideMenu时调用;
     @Override
     public void onDrawerSlide(View drawerView,float sideOffset){
         super.onDrawerSlide(drawerView,sideOffset);
-        //
     }
     //菜单完全关闭时调用;
     @Override
     public void onDrawerClosed(View view){
         super.onDrawerClosed(view);
-        //drawer.removeAllViews();
-        //drawer.invalidate();
         //是菜单选项隐藏,为下次打开菜单时候的动画做准备;
         this.setViewGone();
     }
@@ -71,7 +66,7 @@ public abstract class SideMenuActionBarDrawerToggle extends ActionBarDrawerToggl
         super.onDrawerOpened(view);
         isClosed=false;
         //首次创建菜单选项;
-        if(mdrawerContainer.getChildCount()==0){
+        if(mDrawerContainer.getChildCount()==0){
             this.createSideMenuItems();
         }
         //菜单选项已经创建,只显示sidemenu;
@@ -95,9 +90,9 @@ public abstract class SideMenuActionBarDrawerToggle extends ActionBarDrawerToggl
         menuVies.clear();
         //逐一添加sidemenu选项;
         for(int i=0;i<items.size();i++){
-            final View view=mainAcitivity.getLayoutInflater().inflate(R.layout.menu_item,null);
+            final View view=mainActivity.getLayoutInflater().inflate(R.layout.menu_item,null);
             ((ImageView)view.findViewById(R.id.menu_list_item)).setImageResource(items.get(i).getResouceId());
-            mdrawerContainer.addView(view);
+            mDrawerContainer.addView(view);
             final int position=i;
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -132,7 +127,6 @@ public abstract class SideMenuActionBarDrawerToggle extends ActionBarDrawerToggl
                     }
                     if (position == items.size() - 1) {
                         //菜单选项加载完毕保存fragment的屏幕信息;
-                        mScreenable.takeScreen();
                         setViewClickable(true);
                     }
                 }
@@ -170,7 +164,7 @@ public abstract class SideMenuActionBarDrawerToggle extends ActionBarDrawerToggl
 
     private void setViewClickable(boolean isClickable){
         //左上角图标设置不可点击;
-        mainAcitivity.getSupportActionBar().setHomeButtonEnabled(false);
+        mainActivity.getSupportActionBar().setHomeButtonEnabled(false);
         //分别设置菜单选项;
         for(int i=0;i<items.size();i++){
             menuVies.get(i).setEnabled(isClickable);
@@ -199,8 +193,6 @@ public abstract class SideMenuActionBarDrawerToggle extends ActionBarDrawerToggl
     //隐藏选项时的动画;
     private void animateHide(final int position){
         final View view=menuVies.get(position);
-        //view.setVisibility(View.VISIBLE);
-        //TranslateAnimation animation= new TranslateAnimation(-100,0,0,0);
         ScaleAnimation animation = new ScaleAnimation(
                 1, 0, 1, 0,
                 Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
@@ -225,7 +217,6 @@ public abstract class SideMenuActionBarDrawerToggle extends ActionBarDrawerToggl
             }
         });
         view.startAnimation(animation);
-        //view.setVisibility(View.GONE);
     }
 
     /**

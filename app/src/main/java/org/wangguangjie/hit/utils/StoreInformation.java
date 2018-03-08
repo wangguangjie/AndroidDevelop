@@ -55,8 +55,6 @@ public class StoreInformation {
     }
     public void recoveryData()
     {
-        //ArrayList<NewItem> p_lists=new ArrayList<>();
-        //SharedPreferences.Editor editor=preferences.edit();
         for(int i=0;i<preferences.getInt(LIST_SIZE,0);i++)
         {
             String title,time,url,visitCount;

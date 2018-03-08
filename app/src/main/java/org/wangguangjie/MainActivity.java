@@ -1,9 +1,10 @@
-package org.wangguangjie.headline;
+package org.wangguangjie;
 
-import android.animation.Animator;
+
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -12,21 +13,23 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
-import android.view.ViewAnimationUtils;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.Spinner;
+
+import com.nineoldandroids.animation.Animator;
 
 import org.wangguangjie.crime.controler.CrimeListActivity;
-import org.wangguangjie.hit.HitFragment;
+import org.wangguangjie.headline.R;
+import org.wangguangjie.hit.ItemFragment;
+import org.wangguangjie.hit.controller.TableFragmentPagerAdapter;
 import org.wangguangjie.sidemenu.model.SideItem;
 import org.wangguangjie.sidemenu.Listener.SideMenuActionBarDrawerToggle;
 import org.wangguangjie.test.TestActivity;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import io.codetail.animation.ViewAnimationUtils;
 
 /**
  * 问题1.由于三星手机的原因（别的机型测试没有问题），在每次程序进入后台之后（如按HOME键），系统结束程序进程（回收程序的内存），导致重新进入程序之后，
@@ -44,21 +47,15 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity{
 
     private DrawerLayout mDrawerLayout;
-    private LinearLayout content_frame;
-    private LinearLayout content_overlay;
+
+
     private LinearLayout drawer;
-    private Spinner mSpinner;
+   // private Spinner mSpinner;
 
     SideMenuActionBarDrawerToggle sideMenuActionBarDrawerToggle;
 
     private Toolbar mToolbar;
-    private String mTitle;
-    private int mIcon;
-    private int mLog;
-    private boolean isFistSpinner;
-    HitFragment mHitFragment;
 
-    Bundle mBundle;
 
     private List<SideItem> items=new ArrayList<>();
 
@@ -71,11 +68,34 @@ public class MainActivity extends AppCompatActivity{
     final static String ALBUM="Album";
     final static String POSITION="position";
 
+    public static String PREFERENCES="PERFERENCESNAME";
+
+
+    private String[] urls=new String[]{
+            "http://www.hitsz.edu.cn/article/id-74.html",
+            "http://www.hitsz.edu.cn/article/id-75.html",
+            "http://www.hitsz.edu.cn/article/id-77.html",
+            "http://www.hitsz.edu.cn/article/id-78.html",
+            "http://www.hitsz.edu.cn/article/id-80.html"
+    };
+
+
+
+
+    private List<ItemFragment> mItemFragments=new ArrayList<>();
+
+    private ViewPager mViewPager;
+    private  android.support.design.widget.TabLayout mTableLayout;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        initValues();
+        mDrawerLayout=(DrawerLayout)findViewById(R.id.drawerlayout);
+        drawer=(LinearLayout)findViewById(R.id.drawer);
+        mToolbar=(Toolbar)findViewById(R.id.toolbar);
+        //mSpinner=(Spinner)findViewById(R.id.spinner);
         //初始化视图;
         initView();
     }
@@ -120,48 +140,31 @@ public class MainActivity extends AppCompatActivity{
         super.onSaveInstanceState(b);
         Log.d("test","onSaveInstanceState");
     }
-    private void initValues(){
-        mDrawerLayout=(DrawerLayout)findViewById(R.id.drawerlayout);
-        content_frame=(LinearLayout)findViewById(R.id.content_frame);
-        content_overlay=(LinearLayout)findViewById(R.id.content_overlay);
-        drawer=(LinearLayout)findViewById(R.id.drawer);
-        mToolbar=(Toolbar)findViewById(R.id.toolbar);
-        mSpinner=(Spinner)findViewById(R.id.spinner);
-    }
+
     //初始化视图;
     private void initView(){
         //初始化工具条;
         initActionBar();
-        //初始化Fragment;
-        if(mHitFragment==null)
-        {
-            mHitFragment = new HitFragment();
+        mViewPager=(ViewPager)findViewById(R.id.view_pager);
+        for(int i=0;i<urls.length;i++){
+           ItemFragment fragment=new ItemFragment();
+           Bundle bundle=new Bundle();
+           bundle.putString(PREFERENCES,"hit"+i);
+           bundle.putString("url",urls[i]);
+           fragment.setArguments(bundle);
+           mItemFragments.add(fragment);
         }
-        mHitFragment.setFragmentView(content_frame);
-        getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, mHitFragment).commit();
-        //设置spinner监听器;
-        mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                Log.d("spinner","spinner");
-                mHitFragment.onItemSelected(position);
-            }
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-        //初始化侧边菜单;
+       mViewPager.setAdapter(new TableFragmentPagerAdapter(getSupportFragmentManager(),
+               mItemFragments,getResources().getStringArray(R.array.classifies)));
+        mTableLayout=(android.support.design.widget.TabLayout)findViewById(R.id.table_layout);
+        mTableLayout.setupWithViewPager(mViewPager);
         initSideMenu();
     }
     private void initActionBar(){
         //toolbar初始化设置;
-        mTitle="title1";
-        mIcon=R.drawable.log1;
-        mLog=R.mipmap.icon_hit;
         mToolbar.setTitle("HIT官网");
         mToolbar.setTitleTextColor(getResources().getColor(R.color.colorAccent));
-        mToolbar.setLogo(mLog);
+        mToolbar.setLogo(R.mipmap.icon_hit);
         setSupportActionBar(mToolbar);
         ActionBar actionBar=getSupportActionBar();
         actionBar.setHomeButtonEnabled(true);
@@ -178,9 +181,9 @@ public class MainActivity extends AppCompatActivity{
                 //mDrawerLayout.closeDrawers();
             }
         });
-        //drawerlayout与actionbar绑定，同时也作为drawer的监听器，当点击左上角图标时显示sidemenu(侧边菜单监听器);
+        //DrawerLayout与actionbar绑定，同时也作为drawer的监听器，当点击左上角图标时显示sidemenu(侧边菜单监听器);
         sideMenuActionBarDrawerToggle=new SideMenuActionBarDrawerToggle(this,
-                mDrawerLayout,mToolbar,R.string.drawer_open,R.string.drawer_close,drawer,items,mHitFragment){
+                mDrawerLayout,mToolbar,R.string.drawer_open,R.string.drawer_close,drawer,items){
             @Override
             public void onSwitch(View view, int position) {
                 MainActivity.this.onSwitch(view,position);
@@ -190,12 +193,6 @@ public class MainActivity extends AppCompatActivity{
         mDrawerLayout.addDrawerListener(sideMenuActionBarDrawerToggle);
         //使actionbar左上角的图标状态同步;
         sideMenuActionBarDrawerToggle.syncState();
-        new Button(this).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-            }
-        });
     }
     //设置侧边菜单选项;
     private void setItems()
@@ -217,7 +214,6 @@ public class MainActivity extends AppCompatActivity{
         items.add(item3);
         SideItem item4=new SideItem(R.drawable.icon_album,ALBUM);
         items.add(item4);
-
     }
 
     //创建菜单回调;
@@ -233,29 +229,12 @@ public class MainActivity extends AppCompatActivity{
         switch (position){
             case 0:
             {
-                //关闭drawer，不改变fragment;
-                //mDrawerLayout.closeDrawers();
+
             }
             break;
             case 1:
             {
 
-                View view1=findViewById(R.id.content_frame);
-                int[] location={0,0};
-                view1.getLocationOnScreen(location);
-                int cx=location[0]+view1.getWidth()/2;
-                int cy=view1.getHeight()/2;
-                int radix=(int)Math.hypot(view1.getWidth()/2,view1.getHeight()/2);
-                Animator animator= ViewAnimationUtils.createCircularReveal(view1,cx,cy,0,radix);
-                animator.setInterpolator(new AccelerateDecelerateInterpolator());
-                animator.setDuration(750);
-                animator.start();
-                if(mHitFragment==null)
-                {
-                    mHitFragment=new HitFragment();
-                    mHitFragment.setFragmentView(content_frame);
-                }
-                getSupportFragmentManager().beginTransaction().replace(R.id.content_frame,mHitFragment).commit();
             }
             break;
             case 2:
@@ -280,12 +259,5 @@ public class MainActivity extends AppCompatActivity{
     @Override
     public void onConfigurationChanged(Configuration newConfig){
         super.onConfigurationChanged(newConfig);
-        if(newConfig.orientation==Configuration.ORIENTATION_PORTRAIT){
-            mHitFragment=new HitFragment();
-            getSupportFragmentManager().beginTransaction().replace(R.id.content_frame,mHitFragment).commit();
-        }else{
-            mHitFragment=new HitFragment();
-            getSupportFragmentManager().beginTransaction().replace(R.id.content_frame,mHitFragment).commit();
-        }
     }
 }

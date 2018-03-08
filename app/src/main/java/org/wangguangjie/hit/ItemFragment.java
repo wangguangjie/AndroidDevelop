@@ -1,5 +1,9 @@
 package org.wangguangjie.hit;
 
+/**
+ * Created by wangguangjie on 2018/3/8.
+ */
+
 import android.animation.Animator;
 import android.content.Context;
 import android.content.Intent;
@@ -15,9 +19,7 @@ import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -27,13 +29,13 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.wangguangjie.MainActivity;
 import org.wangguangjie.RefreshLinearLayout;
 import org.wangguangjie.headline.R;
 import org.wangguangjie.hit.controller.InformationAdapter;
 import org.wangguangjie.hit.controller.WebInformation;
 import org.wangguangjie.hit.model.NewItem;
 import org.wangguangjie.hit.utils.StoreInformation;
-import org.wangguangjie.sidemenu.interfaces.Screenable;
 
 import static android.content.Context.MODE_PRIVATE;
 
@@ -58,26 +60,14 @@ import static android.content.Context.MODE_PRIVATE;
  *
  */
 
-public class HitFragment extends Fragment implements Screenable{
+public class ItemFragment extends Fragment{
 
     private StoreInformation store_lists;
 
-    private final String HIT1 = "http://www.hitsz.edu.cn/article/id-74.html";
-    private final String HIT2 = "http://www.hitsz.edu.cn/article/id-75.html";
-    private final String HIT3 = "http://www.hitsz.edu.cn/article/id-77.html";
-    private final String HIT4 = "http://www.hitsz.edu.cn/article/id-78.html";
-    private final String HIT5 = "http://www.hitsz.edu.cn/article/id-80.html";
-
-    private String url1 = HIT1 + "?maxPageItems=10&keywords=&pager.offset=";
-    private String url2 = HIT2 + "?maxPageItems=10&keywords=&pager.offset=";
-    private String url3 = HIT3 + "?maxPageItems=10&keywords=&pager.offset=";
-    private String url4 = HIT4 + "?maxPageItems=10&keywords=&pager.offset=";
-    private String url5 = HIT5 + "?maxPageItems=10&keywords=&pager.offset=";
-
-    //
-    private String url = url1;
-    private String page_url;
+    private final String mString="?maxPageItems=10&keywords=&pager.offset=";
+    private String url;
     private int pages;
+    private String page_url;
 
     //页码数;初始页码为1;
     private int page_number;
@@ -89,13 +79,14 @@ public class HitFragment extends Fragment implements Screenable{
     private InformationAdapter adapter;
     //
     private boolean first;
-    //
-    private View frgamentView;
 
     private Bitmap mBitmap;
     private View mContainerView;
 
     private RefreshLinearLayout mLinearLayout;
+
+    private String mPreferencesName="default_name";
+
 
     private Handler handler = new Handler() {
         @Override
@@ -115,7 +106,7 @@ public class HitFragment extends Fragment implements Screenable{
             //如果无更多页面不许进行加载更多;
             else if (msg.what == 0x125) {
                 Toast.makeText(getActivity(), "无更多信息!", Toast.LENGTH_LONG).show();
-               // listView.getMoreComplete();
+                // listView.getMoreComplete();
             }else if(msg.what==0x126){
                 adapter = new InformationAdapter(getContext(), store_lists.getLists());
                 listView.setAdapter(adapter);
@@ -156,13 +147,13 @@ public class HitFragment extends Fragment implements Screenable{
         }
     }
 
-    public void setFragmentView(View view){
-        frgamentView=view;
-    }
 
     @Override
     public void onCreate(Bundle saveInstance){
         super.onCreate(saveInstance);
+        Bundle bundle=getArguments();
+        mPreferencesName=bundle.getString(MainActivity.PREFERENCES);
+        url=bundle.getString("url")+mString;
         //初始化数据;
         first=true;
         page_number=0;
@@ -170,86 +161,15 @@ public class HitFragment extends Fragment implements Screenable{
         page_number+=10;
         Log.d("test","fragment onCreate");
     }
-    @Override
-    public void onAttach(Context context){
-        super.onAttach(context);
-        Log.d("test","fragment onAttach");
-    }
-
-    @Override
-    public void onActivityCreated(Bundle bundle){
-        super.onActivityCreated(bundle);
-        Log.d("test","fragment onActivityCreated");
-    }
-
-    @Override
-    public void onStart(){
-        super.onStart();
-        Log.d("test","fragment onStart");
-    }
-    @Override
-    public void onResume(){
-        super.onResume();
-        Log.d("test","fragment onResume");
-    }
-    @Override
-    public void onPause(){
-        super.onPause();
-        Log.d("test","fragment onPause");
-    }
-    @Override
-    public void onStop(){
-        super.onStop();
-        Log.d("test","fragment onStop");
-    }
-    @Override
-    public void onDestroyView(){
-        super.onDestroyView();
-        Log.d("test","fragment onDestroy");
-    }
-    @Override
-    public void onDestroy(){
-        super.onDestroy();
-        Log.d("test","fragment onDestroy");
-    }
-
-    @Override
-    public void onDetach(){
-        super.onDetach();
-        Log.d("test","fragment onDetach");
-    }
-    public void onItemSelected(int position){
-        switch (position)
-        {
-            case 0:
-                url=url1;
-                break;
-            case 1:
-                url=url2;
-                break;
-            case 2:
-                url=url3;
-                break;
-            case 3:
-                url=url4;
-                break;
-            case 4:
-                url=url5;
-                break;
-            default:
-                break;
-        }
-        Message msg = new Message();
-        msg.what = 0x124;
-        handler.sendMessage(msg);
-    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup viewGroup,Bundle bundle){
         Log.d("test","fragment onCreateView");
-        View rootView=inflater.inflate(R.layout.pulllist,viewGroup,false);
+        View rootView=inflater.inflate(R.layout.news_fragment_refresh_linearlayout,viewGroup,false);
         mLinearLayout=(RefreshLinearLayout) rootView.findViewById(R.id.refresh_linear_layout);
-        listView=(ListView)rootView.findViewById(R.id.hitfragment_container);
+        //设置此LinearLayout的SharedPreferences保存数据;
+        mLinearLayout.setSharedPreferenceName(mPreferencesName);
+        listView=(ListView)rootView.findViewById(R.id.list_view);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, final int position, long l){
@@ -288,29 +208,24 @@ public class HitFragment extends Fragment implements Screenable{
                 }
             }
         });
-        store_lists = new StoreInformation(getActivity().getSharedPreferences("hit1", MODE_PRIVATE));
+        store_lists = new StoreInformation(getActivity().getSharedPreferences(mPreferencesName+"hit", MODE_PRIVATE));
         //开启恢复线程，恢复本地数据;
         new Thread(new RecoveryThread()).start();
         return rootView;
+    }
+    @Override
+    public void onResume(){
+        super.onResume();
+        //如果首次打开应用，则进行数据获取;
+        if(store_lists.getLists().size()==0){
+            new Thread(new getThread()).start();
+        }
     }
 
     //主线程显示信息;
     private void updateUI()
     {
         adapter.notifyDataSetChanged();
-        //动画显示更新;
-        if(first&&frgamentView!=null) {
-            View view1 = frgamentView;
-            int[] location = {0, 0};
-            view1.getLocationOnScreen(location);
-            int cx = location[0] + view1.getWidth() / 2;
-            int cy = view1.getHeight() / 2;
-            int radix = (int) Math.hypot(view1.getWidth() / 2, view1.getHeight() / 2);
-            Animator animator = ViewAnimationUtils.createCircularReveal(view1, cx, cy, 0, radix);
-            animator.setInterpolator(new AccelerateDecelerateInterpolator());
-            animator.setDuration(750);
-            animator.start();
-        }
     }
     //获取网络信息;
     private void getMessage()
@@ -469,25 +384,7 @@ public class HitFragment extends Fragment implements Screenable{
     @Override
     public void onViewCreated(View view, @Nullable Bundle saveInstanceState){
         super.onViewCreated(view,saveInstanceState);
-        mContainerView=view.findViewById(R.id.hitfragment_container);
+        //mContainerView=view.findViewById(R.id.view_pager);
     }
 
-    @Override
-    public void takeScreen() {
-
-        new Thread(){
-            @Override
-            public void run(){
-                Bitmap bp=Bitmap.createBitmap(mContainerView.getWidth(),mContainerView.getHeight(),Bitmap.Config.ARGB_8888);
-                Canvas canvas=new Canvas(bp);
-                mContainerView.draw(canvas);
-                mBitmap=bp;
-            }
-        }.start();
-    }
-
-    @Override
-    public Bitmap getScreenBitmap() {
-        return mBitmap;
-    }
 }

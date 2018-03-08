@@ -109,6 +109,8 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
     //
     private boolean canRefresh;
     private boolean canGetMore;
+    //
+    private String mSharedPreferencesName="DEFAULT_NAME";
 
     public RefreshLinearLayout(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -120,7 +122,9 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
         mDescriptionTextView=(TextView)mHeader.findViewById(R.id.description);
         mUpdateTimeTextView=(TextView)mHeader.findViewById(R.id.update_time);
         mTouchSlop= ViewConfiguration.get(context).getScaledTouchSlop();
-        mSharedPreferences= PreferenceManager.getDefaultSharedPreferences(context);
+        //mSharedPreferences= PreferenceManager.getDefaultSharedPreferences(context);
+        //针对不同的刷新LinearLayout分别获取对于的SharedPreferences,如果用户没有设置，则使用默认的SharePreferences
+        //mSharedPreferences=mContext.getSharedPreferences(mSharedPreferencesName,mContext.MODE_PRIVATE);
         hasLoaded=false;
         //是指为垂直布局;
         setOrientation(VERTICAL);
@@ -167,8 +171,12 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
         mDescriptionTextView.setText(description);
     }
 
+    public void setSharedPreferenceName(String name){
+        mSharedPreferencesName=name;
+    }
     private void setHeaderUpdateTime(){
         long currentTime= System.currentTimeMillis();
+        mSharedPreferences=mContext.getSharedPreferences(mSharedPreferencesName,mContext.MODE_PRIVATE);
         long lastTime=mSharedPreferences.getLong(LAST_UPDATE_TIME,-1);
         String description="";
         Long time=(currentTime-lastTime)/1000;
@@ -447,6 +455,7 @@ public class RefreshLinearLayout extends LinearLayout implements View.OnTouchLis
 
         @Override
         protected void onPostExecute(Integer res){
+            mSharedPreferences=mContext.getSharedPreferences(mSharedPreferencesName,mContext.MODE_PRIVATE);
             mSharedPreferences.edit().putLong(LAST_UPDATE_TIME, System.currentTimeMillis()).commit();
             refreshCompleted();
             setAnimation();
