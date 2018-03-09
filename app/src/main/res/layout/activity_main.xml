@@ -18,12 +18,26 @@
             android:layout_height="wrap_content"
             android:background="@color/colorPrimary"
             android:textColor="@color/white">
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="@string/toolbar_head"
-                android:gravity="center"
-                android:textSize="20sp"/>
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="6"
+                    android:text="@string/toolbar_head"
+                    android:gravity="center"
+                    android:textSize="20sp"/>
+                <ImageView
+                    android:id="@+id/head_search"
+                    android:layout_width="0dp"
+                    android:layout_height="45dp"
+                    android:layout_weight="1"
+                    android:paddingRight="5dp"
+                    android:src="@drawable/ic_search"/>
+            </LinearLayout>
+
         </android.support.v7.widget.Toolbar>
 
 
@@ -45,8 +59,8 @@
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_gravity="right"
-                    android:src="@drawable/ic_plus_new"
-                    android:background="#fff"
+                    android:src="@drawable/ic_items"
+                    android:background="@color/white"
                     android:paddingTop="5dp"
                     android:paddingRight="5dp"
                     android:paddingLeft="5dp"

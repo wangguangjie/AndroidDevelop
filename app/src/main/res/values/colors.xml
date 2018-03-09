@@ -1,15 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="colorPrimaryDark">#000000</color>
-    <color name="colorPrimary">#494949</color>
+    <color name="colorPrimary">#FF8FB9DE</color>
+
     <color name="toolbarColor">#ffffee</color>
     <color name="colorAccent">#F0F8FF</color>
+
+    <color name="color_item">#F0F8FF</color>
+
     <color name="color_button">#FFDEEAE9</color>
     <color name="itemBackground">#cccc99</color>
+
     <color name="colorDivider">#ffa54f</color>
+
     <color name="white">#ffffff</color>
     <color name="accent_material_light">#ffcf40</color>
-    <color name="primary_material_light">#f7f0f5</color>
+
+    <color name="primary_material_light">#8fb9ff</color>
     <color name="red">#f44336</color>
     <color name="dark_red">#C3352B</color>
     <color name="soothing_blue">#607D8B</color>

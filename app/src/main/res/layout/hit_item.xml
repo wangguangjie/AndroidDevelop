@@ -4,7 +4,7 @@
               android:layout_height="match_parent"
               android:orientation="vertical"
               android:paddingBottom="10dp"
-              android:background="@color/colorAccent">
+              android:background="@color/color_item">
     <TextView
         android:id="@+id/item_title"
         android:layout_width="match_parent"

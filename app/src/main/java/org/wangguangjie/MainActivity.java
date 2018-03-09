@@ -97,7 +97,9 @@ public class MainActivity extends AppCompatActivity{
         mToolbar=(Toolbar)findViewById(R.id.toolbar);
         //mSpinner=(Spinner)findViewById(R.id.spinner);
         //初始化视图;
-        initView();
+        initActionBar();
+        initTableLayout();
+        initSideMenu();
     }
 
     @Override
@@ -141,25 +143,7 @@ public class MainActivity extends AppCompatActivity{
         Log.d("test","onSaveInstanceState");
     }
 
-    //初始化视图;
-    private void initView(){
-        //初始化工具条;
-        initActionBar();
-        mViewPager=(ViewPager)findViewById(R.id.view_pager);
-        for(int i=0;i<urls.length;i++){
-           ItemFragment fragment=new ItemFragment();
-           Bundle bundle=new Bundle();
-           bundle.putString(PREFERENCES,"hit"+i);
-           bundle.putString("url",urls[i]);
-           fragment.setArguments(bundle);
-           mItemFragments.add(fragment);
-        }
-       mViewPager.setAdapter(new TableFragmentPagerAdapter(getSupportFragmentManager(),
-               mItemFragments,getResources().getStringArray(R.array.classifies)));
-        mTableLayout=(android.support.design.widget.TabLayout)findViewById(R.id.table_layout);
-        mTableLayout.setupWithViewPager(mViewPager);
-        initSideMenu();
-    }
+
     private void initActionBar(){
         //toolbar初始化设置;
         mToolbar.setTitle("HIT官网");
@@ -169,6 +153,24 @@ public class MainActivity extends AppCompatActivity{
         ActionBar actionBar=getSupportActionBar();
         actionBar.setHomeButtonEnabled(true);
         actionBar.setDisplayHomeAsUpEnabled(true);
+    }
+
+    public void initTableLayout(){
+        mViewPager=(ViewPager)findViewById(R.id.view_pager);
+        for(int i=0;i<urls.length;i++){
+            ItemFragment fragment=new ItemFragment();
+            Bundle bundle=new Bundle();
+            bundle.putString(PREFERENCES,"hit"+i);
+            bundle.putString("url",urls[i]);
+            fragment.setArguments(bundle);
+            mItemFragments.add(fragment);
+        }
+        mViewPager.setAdapter(new TableFragmentPagerAdapter(getSupportFragmentManager(),
+                mItemFragments,getResources().getStringArray(R.array.classifies)));
+        mTableLayout=(android.support.design.widget.TabLayout)findViewById(R.id.table_layout);
+        mTableLayout.setupWithViewPager(mViewPager);
+        //设置选中和不选中的颜色
+        mTableLayout.setTabTextColors(getResources().getColor(R.color.dark_blue),getResources().getColor(R.color.dark_red));
     }
 
     private void initSideMenu(){
