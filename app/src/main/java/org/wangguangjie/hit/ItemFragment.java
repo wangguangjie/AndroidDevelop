@@ -87,6 +87,7 @@ public class ItemFragment extends Fragment{
 
     private String mPreferencesName="default_name";
 
+    private View rootView;
 
     private Handler handler = new Handler() {
         @Override
@@ -165,52 +166,54 @@ public class ItemFragment extends Fragment{
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup viewGroup,Bundle bundle){
         Log.d("test","fragment onCreateView");
-        View rootView=inflater.inflate(R.layout.news_fragment_refresh_linearlayout,viewGroup,false);
-        mLinearLayout=(RefreshLinearLayout) rootView.findViewById(R.id.refresh_linear_layout);
-        //设置此LinearLayout的SharedPreferences保存数据;
-        mLinearLayout.setSharedPreferenceName(mPreferencesName);
-        listView=(ListView)rootView.findViewById(R.id.list_view);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, final int position, long l){
-                Intent intent1=new Intent(getActivity(),WebInformation.class);
-                Bundle bundle=new Bundle();
-                NewItem item=store_lists.getLists().get(position);
-                bundle.putString("url",item.getUrl());
-                intent1.putExtras(bundle);
-                startActivity(intent1);
-            }
-        });
-        //注册下拉刷新监听器;
-        mLinearLayout.setOnRefreshingListener(new RefreshLinearLayout.RefreshingListener() {
-            @Override
-            public void onRefresh() {
-                first=true;
-                page_number=0;
-                page_url=url+page_number;
-                page_number+=10;
-                getMessage();
-                //缓存最新数据;
-                store_lists.storeData();
-            }
-        });
-        //注册上拉加载更多监听器;
-        mLinearLayout.setOnGetMoreListener(new RefreshLinearLayout.GetMoreListener() {
-            @Override
-            public void onGetMore() {
-                first=false;
-                if(page_number/10<=pages){
-                    page_url = url + page_number;
-                    page_number += 10;
-                    getMessage();
-                    //缓存最新数据
-                    store_lists.storeData();
-                }
-            }
-        });
-        store_lists = new StoreInformation(getActivity().getSharedPreferences(mPreferencesName+"hit", MODE_PRIVATE));
-        //开启恢复线程，恢复本地数据;
-        new Thread(new RecoveryThread()).start();
+       if(rootView==null){
+           rootView = inflater.inflate(R.layout.news_fragment_refresh_linearlayout, viewGroup, false);
+           mLinearLayout = (RefreshLinearLayout) rootView.findViewById(R.id.refresh_linear_layout);
+           //设置此LinearLayout的SharedPreferences保存数据;
+           mLinearLayout.setSharedPreferenceName(mPreferencesName);
+           listView = (ListView) rootView.findViewById(R.id.list_view);
+           listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+               @Override
+               public void onItemClick(AdapterView<?> adapterView, View view, final int position, long l) {
+                   Intent intent1 = new Intent(getActivity(), WebInformation.class);
+                   Bundle bundle = new Bundle();
+                   NewItem item = store_lists.getLists().get(position);
+                   bundle.putString("url", item.getUrl());
+                   intent1.putExtras(bundle);
+                   startActivity(intent1);
+               }
+           });
+           //注册下拉刷新监听器;
+           mLinearLayout.setOnRefreshingListener(new RefreshLinearLayout.RefreshingListener() {
+               @Override
+               public void onRefresh() {
+                   first = true;
+                   page_number = 0;
+                   page_url = url + page_number;
+                   page_number += 10;
+                   getMessage();
+                   //缓存最新数据;
+                   store_lists.storeData();
+               }
+           });
+           //注册上拉加载更多监听器;
+           mLinearLayout.setOnGetMoreListener(new RefreshLinearLayout.GetMoreListener() {
+               @Override
+               public void onGetMore() {
+                   first = false;
+                   if (page_number / 10 <= pages) {
+                       page_url = url + page_number;
+                       page_number += 10;
+                       getMessage();
+                       //缓存最新数据
+                       store_lists.storeData();
+                   }
+               }
+           });
+           store_lists = new StoreInformation(getActivity().getSharedPreferences(mPreferencesName + "hit", MODE_PRIVATE));
+           //开启恢复线程，恢复本地数据;
+           new Thread(new RecoveryThread()).start();
+       }
         return rootView;
     }
     @Override
