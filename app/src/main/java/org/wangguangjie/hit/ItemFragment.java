@@ -5,6 +5,7 @@ package org.wangguangjie.hit;
  */
 
 import android.animation.Animator;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -37,6 +38,8 @@ import org.wangguangjie.hit.controller.WebInformation;
 import org.wangguangjie.hit.model.NewItem;
 import org.wangguangjie.hit.utils.StoreInformation;
 
+import java.lang.ref.WeakReference;
+
 import static android.content.Context.MODE_PRIVATE;
 
 /**
@@ -48,9 +51,10 @@ import static android.content.Context.MODE_PRIVATE;
  *    3.支持下拉刷新和上拉加载更多
  *    4.本地缓存部分数据，提高用户体验
  * 后期改进：
- *    1.对选项条目进行重新设计，使用TableLayout和ViewPager
- *    2.添加收藏功能，选项增加收藏条目.
- *    3.使用SQLite对数据进行操作
+ *    1.对选项条目进行重新设计，使用TableLayout和ViewPager;
+ *    2.添加收藏功能，选项增加收藏条目;
+ *    3.使用SQLite对数据进行操作;
+ *    4.处理handler内存泄露问题;
  * 开发难点：
  *
  * Bug及修复
@@ -89,48 +93,69 @@ public class ItemFragment extends Fragment{
 
     private View rootView;
 
-    private Handler handler = new Handler() {
+    private Handler handler=new MyHandler(this);
+    //handler的匿名内部内拥有外部对象的引用.如果MessageQueue中有此handler发送的message，此message又拥有handler的引用，
+    //而handler又拥有外部对象的引用，所以无法垃圾回收外部对象，导致内存泄露.
+    //更改的做法是使用静态的handler类,同时使用弱引用应用外部对象，此时垃圾回收机制就可以对外部对象进行垃圾回收；
+    //同时当messagequeue中还有次handler发送的消息时，此时handler还会处理处理消息，此时handler应该移除回调在外部对象销毁时;
+    private static class MyHandler extends Handler {
+        //外层fragment对象的的弱引用;
+        private final WeakReference<ItemFragment> mFragmentRe;
+
+        public MyHandler(ItemFragment fragment) {
+            mFragmentRe = new WeakReference<>(fragment);
+        }
+
         @Override
         public void handleMessage(Message msg) {
             //更改解析出信息,更新界面;
             if (msg.what == 0x123) {
-                updateUI();
+                mFragmentRe.get().updateUI();
             }
             //通过actionbar的选择进行解析数据
             else if (msg.what == 0x124) {
-                first = true;
-                page_number = 0;
-                page_url = url + page_number;
-                page_number+=10;
-                new Thread(new getThread()).start();
+                mFragmentRe.get().first = true;
+                mFragmentRe.get().page_number = 0;
+                mFragmentRe.get().page_url = mFragmentRe.get().url + mFragmentRe.get().page_number;
+                mFragmentRe.get().page_number += 10;
+                new Thread(mFragmentRe.get().new getThread()).start();
             }
             //如果无更多页面不许进行加载更多;
             else if (msg.what == 0x125) {
-                Toast.makeText(getActivity(), "无更多信息!", Toast.LENGTH_LONG).show();
+                Toast.makeText(mFragmentRe.get().getActivity(), "无更多信息!", Toast.LENGTH_LONG).show();
                 // listView.getMoreComplete();
-            }else if(msg.what==0x126){
-                adapter = new InformationAdapter(getContext(), store_lists.getLists());
-                listView.setAdapter(adapter);
-                listView.deferNotifyDataSetChanged();
+            } else if (msg.what == 0x126) {
+                mFragmentRe.get().adapter = new InformationAdapter(mFragmentRe.get().getContext(),
+                        mFragmentRe.get().store_lists.getLists());
+                mFragmentRe.get().listView.setAdapter(mFragmentRe.get().adapter);
+                mFragmentRe.get().listView.deferNotifyDataSetChanged();
             }
             //处理异常信息;
             else if (msg.what == 0x111) {
-                Toast.makeText(getActivity(), "无法获取信息", Toast.LENGTH_LONG).show();
+                Toast.makeText(mFragmentRe.get().getActivity(), "无法获取信息", Toast.LENGTH_LONG).show();
             }
             //获取信息失败;
             else if (msg.what == 0x222) {
-                Toast.makeText(getActivity(), "信息获取失败,请重新尝试!", Toast.LENGTH_LONG).show();
+                Toast.makeText(mFragmentRe.get().getActivity(), "信息获取失败,请重新尝试!", Toast.LENGTH_LONG).show();
             }
             //无法连接网络;
             else if (msg.what == 0x333) {
-                Toast.makeText(getActivity(), "无法连接网络,请重新尝试!", Toast.LENGTH_LONG).show();
+                Toast.makeText(mFragmentRe.get().getActivity(), "无法连接网络,请重新尝试!", Toast.LENGTH_LONG).show();
             }
         }
-    };
+    }
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        //当外部对象销毁时，移除所有handler关联的messagequeue中的所有message，也就是说handler无法再接收到信息（如果说无法再接收到自己所发送的信息
+        // 这其实并不恰当，因为message可以是target，所以其他handler也可以发送信息给此handler）;
+        //移除此handler所发送的，没有callback的全部message;
+        handler.removeCallbacks(null);
+    }
 
     //子线程执行网络信息的获取任务;
     class getThread implements Runnable {
-
         @Override
         public void run() {
             getMessage();
@@ -143,6 +168,7 @@ public class ItemFragment extends Fragment{
         public void run() {
             store_lists.recoveryData();
             Message msg = new Message();
+            msg.getCallback();
             msg.what = 0x126;
             handler.sendMessage(msg);
         }
@@ -226,7 +252,7 @@ public class ItemFragment extends Fragment{
     }
 
     //主线程显示信息;
-    private void updateUI()
+    protected void updateUI()
     {
         adapter.notifyDataSetChanged();
     }

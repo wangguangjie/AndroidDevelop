@@ -1,6 +1,7 @@
 package org.wangguangjie;
 
 
+import android.app.ActivityManager;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
@@ -9,12 +10,15 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.AdapterView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 
 import com.nineoldandroids.animation.Animator;
 
@@ -63,10 +67,8 @@ public class MainActivity extends AppCompatActivity{
     final static String HIT="Hit";
     final static String ABOUT="About";
     final static String MUSIC="Music";
-    final static String RESOURCE="reource";
     final static String MOVIE="Movie";
     final static String ALBUM="Album";
-    final static String POSITION="position";
 
     public static String PREFERENCES="PERFERENCESNAME";
 
@@ -78,9 +80,6 @@ public class MainActivity extends AppCompatActivity{
             "http://www.hitsz.edu.cn/article/id-78.html",
             "http://www.hitsz.edu.cn/article/id-80.html"
     };
-
-
-
 
     private List<ItemFragment> mItemFragments=new ArrayList<>();
 
